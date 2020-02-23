@@ -1,0 +1,50 @@
+
+<div class="row">
+  <div class="col-12">
+      <form (ngSubmit)="onSubmit(f)" #projectForm="ngForm">
+      <div class="row">
+        <div class="col-12">
+          <div class="form-group">
+            <label for="name">プロジェクト名</label>
+            <input 
+              type="text" 
+              class="form-control"
+              name="name"
+              ngModel
+              required
+              >
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <div class="form-group">
+            <label for="description">プロジェクト詳細</label>
+            <textarea 
+              name="description" 
+              rows="10" 
+              class="form-control"
+              ngModel
+              required
+            ></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <div class="form-group">
+            <label for="address">寄付用アドレス</label>
+            <input 
+              type="text" 
+              class="form-control"
+              name="address"
+              ngModel
+              required
+            >
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" type="submit" [disabled]="!projectForm.valid">プロジェクト登録</button>
+    </form>
+  </div>
+</div>

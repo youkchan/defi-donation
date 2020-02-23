@@ -1,0 +1,16 @@
+  <a style="position: absolute;left: 5px;top:130px; z-index: 3;cursor: pointer; " *ngIf="currentPagenation != 0"(click)="onLeft()"><i class="fa fa-angle-left fa-2x" aria-hidden="true"></i></a>
+  <a style="position: absolute;right: 5px;top:130px;z-index: 3;cursor: pointer; " *ngIf="!isLimit" (click)="onRight()"><i class="fa fa-angle-right fa-2x" aria-hidden="true"></i></a>
+  <div class="row" >
+    <div class="col-6" *ngFor="let project of projects; let i = index" >
+      <div class="card card-body">
+        <h5 class="card-title">{{project.name}}</h5>
+        <p class="card-text">{{project.description}}</p>
+        <button class="btn btn-primary" type="button">ボタン</button>
+      </div>
+    </div>
+</div>
+<div class="row">
+  <div class="col-12 mt-3 text-center">
+      <button class="btn btn-info" type="button" routerLink="new">新しくプロジェクトを登録する</button>
+  </div>
+</div>

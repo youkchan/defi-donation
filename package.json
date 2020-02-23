@@ -19,8 +19,10 @@
     "@angular/platform-browser": "~8.2.14",
     "@angular/platform-browser-dynamic": "~8.2.14",
     "@angular/router": "~8.2.14",
+    "@truffle/contract": "^4.1.10",
     "rxjs": "~6.4.0",
     "tslib": "^1.10.0",
+    "web3": "^1.2.6",
     "zone.js": "~0.9.1"
   },
   "devDependencies": {
