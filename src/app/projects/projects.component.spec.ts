@@ -43,6 +43,16 @@ describe('ProjectsComponent', () => {
     expect(component.projects[1]).toEqual(expectedProjects[2]);
   });
 
+  it('onRight nothing will do when a position is right end', () => {
+    const projectService = fixture.debugElement.injector.get(ProjectService);
+    projectService.setProjects(expectedProjects);
+    component.isLimit = true;
+    component.onRight();
+    expect(component.projects[0]).toEqual(expectedProjects[0]);
+    expect(component.projects[1]).toEqual(expectedProjects[1]);
+
+  })
+
   it('onLeft', () => {
     const projectService = fixture.debugElement.injector.get(ProjectService);
     projectService.setProjects(expectedProjects);
