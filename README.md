@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/youkchan/defi-donation.svg?style=svg)](https://circleci.com/gh/youkchan/defi-donation)
+[![CircleCI](https://circleci.com/gh/youkchan/defi-donation.svg?style=shield)](https://circleci.com/gh/youkchan/defi-donation)
 
 # DefiDonation
 
