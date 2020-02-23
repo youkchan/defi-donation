@@ -50,8 +50,7 @@ describe('ProjectsComponent', () => {
     component.onRight();
     expect(component.projects[0]).toEqual(expectedProjects[0]);
     expect(component.projects[1]).toEqual(expectedProjects[1]);
-
-  })
+  });
 
   it('onLeft', () => {
     const projectService = fixture.debugElement.injector.get(ProjectService);
