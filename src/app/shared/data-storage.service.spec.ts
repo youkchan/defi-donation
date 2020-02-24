@@ -23,7 +23,7 @@ describe('DataStorageService', () => {
     dataStorageService = new DataStorageService(httpClientSpy as any, new ProjectService());
   });
 
-  it('fetch data', () => {
+  it('fetch data', (done) => {
     const expectedProjects: Project[] = [
       { address: 'XXXXXXXX', description: 'test2 description', name: 'test2'  },
       { address: 'YYYYYYYY', description: 'test description', name: 'test'  },
@@ -33,6 +33,7 @@ describe('DataStorageService', () => {
     dataStorageService.fetchProjects().subscribe(
       (response) => {
         expect(response).toEqual(expectedProjects, 'expected Projects');
+        done();
       }
     );
   });

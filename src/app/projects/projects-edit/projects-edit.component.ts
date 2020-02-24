@@ -22,15 +22,19 @@ export class ProjectsEditComponent implements OnInit {
   }
 
   onSubmit() {
-    if (!this.projectForm.valid) {
-      return;
-    }
-    this.dataStorageService.saveProject(this.projectForm.value).subscribe(
-      () => {
+   if (!this.isValid()) {
+     return;
+   }
+   this.dataStorageService.saveProject(this.projectForm.value).subscribe(
+      (response) => {
         this.projectService.addProject(this.projectForm.value);
         this.router.navigate(['/projects']);
       }
     );
+  }
+
+  private isValid() {
+    return this.projectForm.valid;
   }
 
 }

@@ -56,6 +56,17 @@ describe('ProjectsComponent', () => {
     const projectService = fixture.debugElement.injector.get(ProjectService);
     projectService.setProjects(expectedProjects);
     component.currentPagenation = 1;
+
+    component.reloadProject();
+    component.onLeft();
+    expect(component.projects[0]).toEqual(expectedProjects[0]);
+    expect(component.projects[1]).toEqual(expectedProjects[1]);
+  });
+
+  it('onLeft nothing will do when a position is zero', () => {
+    const projectService = fixture.debugElement.injector.get(ProjectService);
+    projectService.setProjects(expectedProjects);
+    component.currentPagenation = 0;
     component.reloadProject();
     component.onLeft();
     expect(component.projects[0]).toEqual(expectedProjects[0]);
