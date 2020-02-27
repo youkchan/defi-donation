@@ -1,7 +1,7 @@
 import { Injectable, OnInit } from '@angular/core';
 import { Web3Service } from './web3.service';
-const defiContract = require('../../../../solidity/defi-donation/build/contracts/DeFiDonation.json');
-const donationAccountContract = require('../../../../solidity/defi-donation/build/contracts/DonationAccount.json');
+const defiContract = require('../../../abi/DeFiDonation.json');
+const donationAccountContract = require('../../../abi/DonationAccount.json');
 const abi = defiContract.abi;
 const donationAbi = donationAccountContract.abi;
 const address = defiContract.networks['4'].address;

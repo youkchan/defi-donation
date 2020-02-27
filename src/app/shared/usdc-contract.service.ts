@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Web3Service } from './web3.service';
-const usdcContract = require('../../../../solidity/centre-tokens/build/contracts/FiatTokenV1.json');
+const usdcContract = require('../../../abi/FiatTokenV1.json');
 const abi = usdcContract.abi;
 const address = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b';
 
