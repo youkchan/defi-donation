@@ -6,6 +6,7 @@ import { Project } from '../projects/project.model';
 import { Web3Service } from './web3.service';
 import { Providers } from 'web3-core';
 import { USDCContractService } from './usdc-contract.service';
+import { NgZone } from '@angular/core';
 
 
 describe('USDCContractService', () => {
@@ -13,7 +14,8 @@ describe('USDCContractService', () => {
   let usdcContractServiceSpy: any;
 
   beforeEach(() => {
-    usdcContractService = new USDCContractService(new Web3Service());
+    const ngZone = new NgZone({});
+    usdcContractService = new USDCContractService(new Web3Service(ngZone));
     usdcContractServiceSpy = usdcContractService;
   });
 

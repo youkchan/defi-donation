@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, NgZone} from '@angular/core';
 import {Subject} from 'rxjs';
 import Web3 from 'web3';
 const contract = require('@truffle/contract');
@@ -9,11 +9,11 @@ declare let window: any;
 export class Web3Service {
     private web3: any;
     private accounts: string[];
-    public accountsObservable = new Subject<string[]>();
+    public accountsObservable = new Subject<boolean>();
     public isConnectMetamask: boolean;
     errCount = 0;
 
-    constructor() {
+    constructor(private ngZone: NgZone) {
       window.addEventListener('load', (event) => {
         this.bootstrapWeb3();
       });
@@ -121,7 +121,9 @@ export class Web3Service {
       if (!this.accounts || this.accounts.length !== accs.length || this.accounts[0] !== accs[0]) {
         console.log('Observed new accounts');
 
-        this.accountsObservable.next(accs);
+        this.ngZone.run(() => {
+          this.accountsObservable.next(true);
+        });
         this.accounts = accs;
       }
 

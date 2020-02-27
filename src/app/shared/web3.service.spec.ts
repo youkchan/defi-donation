@@ -6,13 +6,15 @@ import { defer } from 'rxjs';
 import { Project } from '../projects/project.model';
 import { Web3Service } from './web3.service';
 import { Providers } from 'web3-core';
+import { NgZone } from '@angular/core';
 
 
 describe('Web3Service', () => {
   let web3Service: Web3Service;
 
   beforeEach(() => {
-    web3Service = new Web3Service();
+    const ngZone = new NgZone({});
+    web3Service = new Web3Service(ngZone);
   });
 
   it('Not ethereum browser', () => {

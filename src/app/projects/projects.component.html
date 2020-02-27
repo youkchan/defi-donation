@@ -2,81 +2,89 @@
   <app-loading-spinner></app-loading-spinner>
 </div>
 <div *ngIf="!isLoading">
+  <form (ngSubmit)="onSubmit()" #donationForm="ngForm">
+  <div class="row" *ngIf="!isAccountAvailable">
+    <div class="col-8">
+      <span style="color:red;">最初に寄付用のアカウントを作成してください</span>
+      <button class="btn btn-secondary col-12" type="button" (click)='createAccount()'>寄付用のアカウントを作成する</button>
+    </div>
+  </div>
   <a class="arrow" style="left: 0px;" *ngIf="currentPagenation != 0"(click)="onLeft()"><i class="fa fa-angle-left fa-3x" aria-hidden="true"></i></a>
   <a class="arrow" style="right: 0px;" *ngIf="!isLimit" (click)="onRight()"><i class="fa fa-angle-right fa-3x" aria-hidden="true"></i></a>
-  <div class="row" >
+  <div class="row mt-3" >
     <div class="col-6" *ngFor="let project of projects; let i = index" >
       <div class="card card-body">
         <h5 class="card-title">{{project.name}}</h5>
         <p class="card-text">{{project.description}}</p>
-        <button class="btn btn-primary" type="button">ボタン</button>
+        <input type="text" 
+          class="form-control" 
+          placeholder="寄付金額"
+          name="donateAmount"
+          ngModel
+          required
+          (input)="calculateDuedate($event.target.value, i )"
+        >
+        <button class="btn btn-primary col-" type="button">寄付登録</button>
       </div>
     </div>
-</div>
-<hr>
-<div class="row mt-3" *ngIf="!isAccountAvailable">
-  <div class="col-12">
-    <span style="color:red;">最初に寄付用のアカウントを作成してください</span>
-    <button class="btn btn-secondary col-12" type="button" (click)='createAccount()'>寄付用のアカウントを作成する</button>
   </div>
-</div>
-
-<form (ngSubmit)="onSubmit()" #donationForm="ngForm">
-  <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
-    <label for="usdcBalance">USDC残高 : {{usdcBalance | currency}}</label>
-  </div>
-  <div class="form-group row" *ngIf="isAccountAvailable">
-    <div class="col-6">
-      <input type="text" 
-        class="form-control" 
-        placeholder="送金を許可する金額を入力(USDC)"
-        name="approveAmount"
-        ngModel
-        required
-      >
+  <p style="color: red" *ngIf="dueDate">現在の利息率とデポジット額から計算すると、入力した寄付金額は、約{{dueDate}}ヶ月後に、寄付可能になります。</p>
+  <hr>
+    <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
+      <label for="usdcBalance">USDC残高 : {{usdcBalance | currency}}</label>
     </div>
-    <div class="col-6">
-      <button class="btn btn-secondary col-12" type="button" (click)='approve()' >送金を許可</button>
+    <div class="form-group row" *ngIf="isAccountAvailable">
+      <div class="col-6">
+        <input type="text" 
+          class="form-control" 
+          placeholder="送金を許可する金額を入力(USDC)"
+          name="approveAmount"
+          ngModel
+          required
+        >
+      </div>
+      <div class="col-6">
+        <button class="btn btn-secondary col-12" type="button" (click)='approve()' >送金を許可</button>
+      </div>
+    </div>
+    <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
+      <label for="approvedUsdcBalance">許可済みUSDC残高 : {{usdcAllowanceBalance | currency}}</label>
+    </div>
+    <div class="form-group row " *ngIf="isAccountAvailable">
+      <div class="col-6">
+        <input type="text" 
+          class="form-control" 
+          placeholder="デポジット金額を入力(USDC)"
+          name="supplyAmount"
+          ngModel
+          required
+        >
+      </div>
+      <div class="col-6">
+        <button class="btn btn-secondary col-12" type="button" (click)='supply()'>デポジットの実施</button>
+      </div>
+    </div>
+    <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
+      <label for="underlyingBalance">デポジット済み金額 : {{underlyingBalance | currency}}</label>
+    </div>
+    <div class="form-group row " *ngIf="isAccountAvailable">
+      <div class="col-6">
+        <input type="text" 
+          class="form-control" 
+          placeholder="引き出し金額を入力(USDC)"
+          name="redeemAmount"
+          ngModel
+          required
+        >
+      </div>
+      <div class="col-6">
+        <button class="btn btn-secondary col-12" type="button" (click)='reddm()'>引き出し</button>
+      </div>
+    </div>
+  </form>
+  <div class="row">
+    <div class="col-12 mt-3">
+        <button class="btn btn-info" type="button" routerLink="new">新しくプロジェクトを登録する</button>
     </div>
   </div>
-  <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
-    <label for="approvedUsdcBalance">許可済みUSDC残高 : {{usdcAllowanceBalance | currency}}</label>
-  </div>
-  <div class="form-group row " *ngIf="isAccountAvailable">
-    <div class="col-6">
-      <input type="text" 
-        class="form-control" 
-        placeholder="デポジット金額を入力(USDC)"
-        name="supplyAmount"
-        ngModel
-        required
-      >
-    </div>
-    <div class="col-6">
-      <button class="btn btn-secondary col-12" type="button" (click)='supply()'>デポジットの実施</button>
-    </div>
-  </div>
-  <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
-    <label for="underlyingBalance">デポジット済み金額 : {{underlyingBalance | currency}}</label>
-  </div>
-  <div class="form-group row " *ngIf="isAccountAvailable">
-    <div class="col-6">
-      <input type="text" 
-        class="form-control" 
-        placeholder="引き出し金額を入力(USDC)"
-        name="redeemAmount"
-        ngModel
-        required
-      >
-    </div>
-    <div class="col-6">
-      <button class="btn btn-secondary col-12" type="button" (click)='reddm()'>引き出し</button>
-    </div>
-  </div>
-</form>
-<div class="row">
-  <div class="col-12 mt-3">
-      <button class="btn btn-info" type="button" routerLink="new">新しくプロジェクトを登録する</button>
-  </div>
-</div>
 </div>

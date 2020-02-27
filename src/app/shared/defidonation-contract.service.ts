@@ -21,7 +21,7 @@ export class DeFiDonationContractService {
   }
 
   async setDonationAccount() {
-    if (!this.deFiDonation || this.donationAccount) {
+    if (!this.deFiDonation ) {
       return false;
     }
 
@@ -44,6 +44,10 @@ export class DeFiDonationContractService {
 
   isAccountExists(): Promise<any> {
     return this.deFiDonation.methods.isAccountExists().call({from: this.web3Service.getSelectedAddress()});
+  }
+
+  getSupplyRate(): Promise<any> {
+    return this.deFiDonation.methods.getSupplyRate().call({from: this.web3Service.getSelectedAddress()});
   }
 
   getDonationAccount(): Promise<any> {

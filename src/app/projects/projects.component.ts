@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, Input, Output, EventEmitter, ChangeDetectorRef, NgZone } from '@angular/core';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
 import { Subscription } from 'rxjs';
@@ -7,6 +7,7 @@ import { Web3Service } from '../shared/web3.service';
 import { DeFiDonationContractService } from '../shared/defidonation-contract.service';
 import { USDCContractService } from '../shared/usdc-contract.service';
 import { NgForm } from '@angular/forms';
+import { CompoundAPIService } from '../shared/compound-api.service';
 
 @Component({
   selector: 'app-projects',
@@ -19,11 +20,14 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   currentPagenation = 0;
   isLimit = false;
   subscription: Subscription;
+  accountSubscription: Subscription;
   isAccountAvailable = false;
   usdcBalance = 0;
   usdcAllowanceBalance = 0;
   isLoading = false;
   underlyingBalance = 0;
+  interestRate: number;
+  dueDate: number;
   @ViewChild('donationForm', { static: false }) donationForm: NgForm;
 
   constructor(
@@ -31,7 +35,9 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     private dataStorageService: DataStorageService,
     private defiDonationContractService: DeFiDonationContractService,
     private usdcContractService: USDCContractService,
-    private web3Service: Web3Service
+    private compoundAPIService: CompoundAPIService,
+    private web3Service: Web3Service,
+  //  private ngZone: NgZone
     ) { }
 
   ngOnInit() {
@@ -43,32 +49,41 @@ export class ProjectsComponent implements OnInit, OnDestroy {
           this.reloadProject();
         }
       );
-
     this.dataStorageService.fetchProjects().subscribe();
-    this.defiDonationContractService.initialize()
-    .then(() => {
-      this.defiDonationContractService.setDonationAccount();
-    })
-    .then(() => {
-      this.checkDonationAccount();
-    })
-    .then(() => {
-      this.getUSDCBalance();
-    })
-    .then(async () => {
-      const isAccountExists = await this.defiDonationContractService.isAccountExists();
-      if (isAccountExists) {
-        this.getUSDCAllowance();
-      }
-    })
-    .then(() => {
-      this.isLoading = false;
+
+    this.accountSubscription = this.web3Service.accountsObservable.subscribe(() => {
+      this.defiDonationContractService.initialize()
+      .then(async () => {
+        await this.defiDonationContractService.setDonationAccount();
+      })
+      .then(() => {
+        this.checkDonationAccount();
+      })
+      .then(async () => {
+        this.compoundAPIService.getSupplyRate().subscribe((result) => {
+          this.interestRate = result;
+        });
+      })
+      .then(() => {
+        this.getUSDCBalance();
+      })
+      .then(async () => {
+        const isAccountExists = await this.defiDonationContractService.isAccountExists();
+        if (isAccountExists) {
+          this.getUSDCAllowance();
+        }
+      })
+      .then(() => {
+        this.isLoading = false;
+      });
     });
+
 
   }
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
+    this.accountSubscription.unsubscribe();
   }
 
   onRight() {
@@ -78,6 +93,16 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.currentPagenation++;
     this.reloadProject();
     this.checkLimit();
+  }
+
+  calculateDuedate(val: string, index: number) {
+    if (isNaN(Number(val))) {
+      return;
+    }
+    const monthlyInterest = this.underlyingBalance * this.interestRate / 12;
+
+  //  this.dueDate = +val / monthlyInterest;
+    this.dueDate = Math.floor(+val / monthlyInterest * 1000) * 0.001;
   }
 
   onLeft() {

@@ -10,6 +10,7 @@ import { Web3Service } from './web3.service';
 import { Providers } from 'web3-core';
 import { USDCContractService } from './usdc-contract.service';
 import { DeFiDonationContractService } from './defidonation-contract.service';
+import { NgZone } from '@angular/core';
 
 
 describe('DeFiDonationContractService', () => {
@@ -17,7 +18,8 @@ describe('DeFiDonationContractService', () => {
   let deFiDonationContractServiceSpy: any;
 
   beforeEach(() => {
-    deFiDonationContractService = new DeFiDonationContractService(new Web3Service());
+    const ngZone = new NgZone({});
+    deFiDonationContractService = new DeFiDonationContractService(new Web3Service(ngZone));
     deFiDonationContractServiceSpy = deFiDonationContractService;
   });
 
