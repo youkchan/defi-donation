@@ -9,6 +9,7 @@ import { ProjectsEditComponent } from './projects/projects-edit/projects-edit.co
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { LoadingSpinnerComponent } from './shared/loading-spinner/loading-spinner.component';
 
 
 @NgModule({
@@ -16,7 +17,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     AppComponent,
     ProjectsComponent,
     SettingComponent,
-    ProjectsEditComponent
+    ProjectsEditComponent,
+    LoadingSpinnerComponent
   ],
   imports: [
     BrowserModule,

@@ -9,10 +9,9 @@ declare let window: any;
 export class Web3Service {
     private web3: any;
     private accounts: string[];
-    public ready = false;
-    public currentAddress: string;
     public accountsObservable = new Subject<string[]>();
     public isConnectMetamask: boolean;
+    errCount = 0;
 
     constructor() {
       window.addEventListener('load', (event) => {
@@ -22,31 +21,38 @@ export class Web3Service {
 
     public bootstrapWeb3() {
       // Checking if Web3 has been injected by the browser (Mist/MetaMask)
-      if (typeof window.ethereum !== 'undefined') {
+      const ethereum = this.getEthereumObj();
+      if (typeof ethereum !== 'undefined') {
         // Use Mist/MetaMask's provider
-        window.ethereum.enable().then( () => {
-          this.web3 = new Web3(window.ethereum);
-          this.currentAddress = window.ethereum.selectedAddress;
+        ethereum.enable().then( () => {
+          this.web3 = this.instantiateWeb3();
           this.refreshAccounts();
         });
+
         this.isConnectMetamask = true;
-        if (window.ethereum.networkVersion !== '4') {
+        if (ethereum.networkVersion !== '4') {
           this.isConnectMetamask = false;
         }
       } else {
-        console.log('No web3? You should consider trying MetaMask!');
-
         this.isConnectMetamask = false;
         throw new Error('Non-Ethereum browser detected. You should consider trying Mist or MetaMask!');
       }
 
-      window.ethereum.on('accountsChanged', async () => {
+      ethereum.on('accountsChanged', async () => {
         this.refreshAccounts();
       });
 
     }
 
-    public async artifactsToContract(artifacts) {
+    private instantiateWeb3() {
+      return new Web3(window.ethereum);
+    }
+
+    private getEthereumObj() {
+      return window.ethereum;
+    }
+
+/*    public async artifactsToContract(artifacts) {
       if (!this.web3) {
         const delay = new Promise(resolve => setTimeout(resolve, 100));
         await delay;
@@ -56,31 +62,54 @@ export class Web3Service {
       const contractAbstraction = contract(artifacts);
       contractAbstraction.setProvider(this.web3.currentProvider);
       return contractAbstraction;
-    }
+    }*/
 
     public async beReady() {
-      if (!this.ready) {
-        const delay = new Promise(resolve => setTimeout(resolve, 100));
+
+      if (!this.web3) {
+        const delay = new Promise(resolve => setTimeout(resolve, 200));
         await delay;
-        return await this.beReady();
+        if (this.errCount === 10) {
+          return null;
+        }
+        this.errCount++;
+        return this.beReady();
       }
+
+      this.errCount = 0;
+    }
+
+    public isReady() {
+      return this.web3 ? true : false;
+    }
+
+    public getSelectedAddress() {
+      return window.ethereum.selectedAddress;
     }
 
     public async getContract(abi, address) {
       if (!this.web3) {
         const delay = new Promise(resolve => setTimeout(resolve, 100));
         await delay;
-        return await this.getContract(abi, address);
+        if (this.errCount === 10) {
+          return null;
+        }
+        this.errCount++;
+        return this.getContract(abi, address);
       }
 
+      this.errCount = 0;
       return new this.web3.eth.Contract(abi , address);
     }
 
+    private getAccount() {
+      return this.web3.eth.getAccounts();
+    }
+
     private async refreshAccounts() {
-      const accs = await this.web3.eth.getAccounts();
-      // this.selectedAddress.next(await window.ethereum.selectedAddress);
-      this.currentAddress = await window.ethereum.selectedAddress;
+      const accs = await this.getAccount();
       console.log(accs);
+      // this.selectedAddress.next(await window.ethereum.selectedAddress);
       console.log('Refreshing accounts');
 
       // Get the initial account balance so it can be displayed.
@@ -96,6 +125,5 @@ export class Web3Service {
         this.accounts = accs;
       }
 
-      this.ready = true;
     }
 }

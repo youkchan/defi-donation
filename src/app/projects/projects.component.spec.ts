@@ -5,6 +5,9 @@ import { ProjectService } from './project.service';
 import { DataStorageService } from '../shared/data-storage.service';
 import { HttpClientModule } from '@angular/common/http';
 import { Project } from './project.model';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
 
 
 
@@ -19,8 +22,8 @@ describe('ProjectsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProjectsComponent ],
-      imports: [HttpClientModule],
+      declarations: [ ProjectsComponent, LoadingSpinnerComponent ],
+      imports: [HttpClientModule, BrowserModule, FormsModule],
       providers: [ProjectService, DataStorageService]
     });
   }));
@@ -28,6 +31,8 @@ describe('ProjectsComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(ProjectsComponent);
     component = fixture.debugElement.componentInstance;
+    component.projects = expectedProjects.slice().splice(0, 2);
+    component.projectsAll = expectedProjects;
     fixture.detectChanges();
   });
 
@@ -36,16 +41,12 @@ describe('ProjectsComponent', () => {
   });
 
   it('onRight', () => {
-    const projectService = fixture.debugElement.injector.get(ProjectService);
-    projectService.setProjects(expectedProjects);
     component.onRight();
     expect(component.projects[0]).toEqual(expectedProjects[1]);
     expect(component.projects[1]).toEqual(expectedProjects[2]);
   });
 
   it('onRight nothing will do when a position is right end', () => {
-    const projectService = fixture.debugElement.injector.get(ProjectService);
-    projectService.setProjects(expectedProjects);
     component.isLimit = true;
     component.onRight();
     expect(component.projects[0]).toEqual(expectedProjects[0]);
@@ -53,10 +54,7 @@ describe('ProjectsComponent', () => {
   });
 
   it('onLeft', () => {
-    const projectService = fixture.debugElement.injector.get(ProjectService);
-    projectService.setProjects(expectedProjects);
     component.currentPagenation = 1;
-
     component.reloadProject();
     component.onLeft();
     expect(component.projects[0]).toEqual(expectedProjects[0]);
@@ -64,8 +62,6 @@ describe('ProjectsComponent', () => {
   });
 
   it('onLeft nothing will do when a position is zero', () => {
-    const projectService = fixture.debugElement.injector.get(ProjectService);
-    projectService.setProjects(expectedProjects);
     component.currentPagenation = 0;
     component.reloadProject();
     component.onLeft();
@@ -74,8 +70,6 @@ describe('ProjectsComponent', () => {
   });
 
   it('reloadProject', () => {
-    const projectService = fixture.debugElement.injector.get(ProjectService);
-    projectService.setProjects(expectedProjects);
     component.currentPagenation = 1;
     component.reloadProject();
     expect(component.projects[0]).toEqual(expectedProjects[1]);

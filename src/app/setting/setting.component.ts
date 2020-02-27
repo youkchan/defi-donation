@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { DeFiDonationContractService } from '../shared/defidonation-contract.service';
 
 @Component({
   selector: 'app-setting',
@@ -6,10 +7,22 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./setting.component.css']
 })
 export class SettingComponent implements OnInit {
-
-  constructor() { }
+  donationAccount: string;
+  constructor(
+    private defiDonationContractService: DeFiDonationContractService,
+  ) { }
 
   ngOnInit() {
+    this.getDonationAccount();
   }
+
+  getDonationAccount() {
+    this.defiDonationContractService.beReady().then(() => {
+      this.defiDonationContractService.getDonationAccount().then((data) => {
+        this.donationAccount = data;
+      });
+    });
+  }
+
 
 }

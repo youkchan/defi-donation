@@ -1,9 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
 import { Subscription } from 'rxjs';
 import { DataStorageService } from '../shared/data-storage.service';
 import { Web3Service } from '../shared/web3.service';
+import { DeFiDonationContractService } from '../shared/defidonation-contract.service';
+import { USDCContractService } from '../shared/usdc-contract.service';
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-projects',
@@ -16,14 +19,23 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   currentPagenation = 0;
   isLimit = false;
   subscription: Subscription;
+  isAccountAvailable = false;
+  usdcBalance = 0;
+  usdcAllowanceBalance = 0;
+  isLoading = false;
+  underlyingBalance = 0;
+  @ViewChild('donationForm', { static: false }) donationForm: NgForm;
 
   constructor(
     private projectService: ProjectService,
     private dataStorageService: DataStorageService,
-    // private web3Service:Web3Service
+    private defiDonationContractService: DeFiDonationContractService,
+    private usdcContractService: USDCContractService,
+    private web3Service: Web3Service
     ) { }
 
   ngOnInit() {
+    this.isLoading = true;
     this.subscription = this.projectService.projectChanged
       .subscribe(
         (projects: Project[]) => {
@@ -33,6 +45,26 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       );
 
     this.dataStorageService.fetchProjects().subscribe();
+    this.defiDonationContractService.initialize()
+    .then(() => {
+      this.defiDonationContractService.setDonationAccount();
+    })
+    .then(() => {
+      this.checkDonationAccount();
+    })
+    .then(() => {
+      this.getUSDCBalance();
+    })
+    .then(async () => {
+      const isAccountExists = await this.defiDonationContractService.isAccountExists();
+      if (isAccountExists) {
+        this.getUSDCAllowance();
+      }
+    })
+    .then(() => {
+      this.isLoading = false;
+    });
+
   }
 
   ngOnDestroy() {
@@ -71,6 +103,98 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     }
   }
 
+  createAccount() {
+    this.defiDonationContractService.beReady().then(async () => {
+      const result = await this.defiDonationContractService.createDonationAccount();
+      console.log(result.transactionHash);
+    });
+  }
+
+  checkDonationAccount() {
+    return this.defiDonationContractService.beReady().then(async () => {
+      try {
+        this.defiDonationContractService.isAccountExists()
+        .then((data) => {
+          this.isAccountAvailable = data;
+          if (data) {
+            this.getUnderlyingBalance();
+          }
+        });
+      } catch (e) {
+        const delay = new Promise(resolve => setTimeout(resolve, 100));
+        await delay;
+        return await this.checkDonationAccount();
+      }
+    });
+  }
+
+  getUSDCBalance() {
+    return this.usdcContractService.beReady().then(() => {
+      this.usdcContractService.getBalance().then((data) => {
+        this.usdcBalance = data;
+      });
+    });
+  }
+
+  getUSDCAllowance() {
+    return this.usdcContractService.beReady().then(() => {
+      this.defiDonationContractService.getDonationAccount().then((address) => {
+        this.usdcContractService.getAllowance(address).then((data) => {
+          this.usdcAllowanceBalance = data;
+        });
+      });
+    });
+  }
+
+  approve() {
+    this.usdcContractService.beReady().then(() => {
+      this.defiDonationContractService.getDonationAccount().then((address) => {
+        this.usdcContractService.approve(address, +this.donationForm.value.approveAmount).then((data) => {
+          console.log(data);
+        });
+      });
+   });
+
+  }
+
+  supply() {
+    this.defiDonationContractService.beReady().then(async () => {
+      try {
+        const result = await this.defiDonationContractService.supply(+this.donationForm.value.supplyAmount);
+        console.log(result);
+      } catch (e) {
+        const delay = new Promise(resolve => setTimeout(resolve, 100));
+        await delay;
+        return await this.supply();
+      }
+    });
+  }
+
+  /*redeem() {
+    this.defiDonationContractService.beReady().then(async () => {
+      try{
+        let result = await this.defiDonationContractService.redeem(+this.donationForm.value.redeemAmount);
+        console.log(result);
+      } catch(e) {
+        const delay = new Promise(resolve => setTimeout(resolve, 100));
+        await delay;
+        return await this.redeem();
+      }
+    });
+  }*/
 
 
+
+  getUnderlyingBalance() {
+    this.defiDonationContractService.beReady().then(async () => {
+      try {
+        const result = await this.defiDonationContractService.getUnderlyingBalance();
+        this.underlyingBalance = result;
+      } catch (e) {
+        const delay = new Promise(resolve => setTimeout(resolve, 100));
+        await delay;
+        return await this.getUnderlyingBalance();
+      }
+    });
+  }
 }

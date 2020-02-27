@@ -14,12 +14,12 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.debugElement.componentInstance;
     expect(app).toBeTruthy();
-  });*/
+  });
 
-/*  it(`should have as title 'defi-donation'`, () => {
+  it(`should have as title 'defi-donation'`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('defi-donation');
+    expect(app.title).toEqual('DeFi-Donation');
   });
 
   it('should render title', () => {
