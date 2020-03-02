@@ -1,35 +1,46 @@
 <div *ngIf="isLoading" style="text-align: center;" class="mt-5 mb-5">
   <app-loading-spinner></app-loading-spinner>
 </div>
+<div *ngIf="isProcessing">
+  <app-processing-spinner></app-processing-spinner>
+</div>
 <div *ngIf="!isLoading">
-  <form (ngSubmit)="onSubmit()" #donationForm="ngForm">
-  <div class="row" *ngIf="!isAccountAvailable">
-    <div class="col-8">
-      <span style="color:red;">最初に寄付用のアカウントを作成してください</span>
-      <button class="btn btn-secondary col-12" type="button" (click)='createAccount()'>寄付用のアカウントを作成する</button>
-    </div>
-  </div>
-  <a class="arrow" style="left: 0px;" *ngIf="currentPagenation != 0"(click)="onLeft()"><i class="fa fa-angle-left fa-3x" aria-hidden="true"></i></a>
-  <a class="arrow" style="right: 0px;" *ngIf="!isLimit" (click)="onRight()"><i class="fa fa-angle-right fa-3x" aria-hidden="true"></i></a>
-  <div class="row mt-3" >
+  <form (ngSubmit)="onSubmit()" #addDonationForm="ngForm">
+ <!--<a class="arrow" style="left: 0px;" *ngIf="currentPagenation != 0"(click)="onLeft()"><i class="fa fa-angle-left fa-3x" aria-hidden="true"></i></a> -->
+  <!--<a class="arrow" style="right: 0px;" *ngIf="!isLimit" (click)="onRight()"><i class="fa fa-angle-right fa-3x" aria-hidden="true"></i></a>-->
+  <div class="row mt-2" >
     <div class="col-6" *ngFor="let project of projects; let i = index" >
       <div class="card card-body">
         <h5 class="card-title">{{project.name}}</h5>
         <p class="card-text">{{project.description}}</p>
+        <p class="card-text">寄付先のアドレス{{project.address}}</p>
         <input type="text" 
           class="form-control" 
-          placeholder="寄付金額"
-          name="donateAmount"
+          placeholder="寄付金額(USDC)"
+          [name]="'donateAmount' + i"
           ngModel
           required
           (input)="calculateDuedate($event.target.value, i )"
+          *ngIf="isDonatedList[i] == null && isAccountAvailable"
         >
-        <button class="btn btn-primary col-" type="button">寄付登録</button>
+        <label for="donateAmount" *ngIf="isDonatedList[i] != null">{{isDonatedList[i] | currency: '' : 'symbol' :'1.0-0'}}を寄付予定です</label>
+        <button class="btn btn-outline-secondary col-12 mt-1" type="button" (click)="addDonateProject(i)" *ngIf="isDonatedList[i] == null" [disabled]="!isAccountAvailable" [ngStyle]="{'cursor': isAccountAvailable ? 'pointer' : 'not-allowed'}">寄付を登録</button>
+        <button class="btn btn-outline-success col-12 mt-1" type="button" (click)="executeDonateProject(i)" *ngIf="isDonatedList[i] != null" [disabled]="!isAccountAvailable" [ngStyle]="{'cursor': isAccountAvailable ? 'pointer' : 'not-allowed'}">寄付を実施</button>
       </div>
     </div>
   </div>
-  <p style="color: red" *ngIf="dueDate">現在の利息率とデポジット額から計算すると、入力した寄付金額は、約{{dueDate}}ヶ月後に、寄付可能になります。</p>
-  <hr>
+  <p style="color: red" *ngIf="dueDate">入力した寄付金額は、約{{dueDate | number:'1.0-2'}}ヶ月後に、利息として付与される予定です。</p>
+  <p style="color: red" *ngIf="dueDate">現在(Rinkeby)、固定利息(7.5%)で計算していますが、利率は状況に応じて変化します</p>
+</form>
+  <form (ngSubmit)="onSubmit()" #donationForm="ngForm">
+  <div class="row mt-3" *ngIf="!isAccountAvailable">
+    <div class="col-12">
+      <span style=" color:red;">最初に寄付用のアカウントを作成してください</span>
+      <button  class="btn btn-outline-info col-8 btn-lg" type="button" (click)='createAccount()'>寄付用のアカウントを作成する</button>
+    </div>
+  </div>
+ 
+  <hr *ngIf="isAccountAvailable">
     <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
       <label for="usdcBalance">USDC残高 : {{usdcBalance | currency}}</label>
     </div>
@@ -44,9 +55,10 @@
         >
       </div>
       <div class="col-6">
-        <button class="btn btn-secondary col-12" type="button" (click)='approve()' >送金を許可</button>
+        <button class="btn btn-outline-success col-12" type="button" (click)='approve()' >送金を許可</button>
       </div>
     </div>
+  <hr *ngIf="isAccountAvailable">
     <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
       <label for="approvedUsdcBalance">許可済みUSDC残高 : {{usdcAllowanceBalance | currency}}</label>
     </div>
@@ -61,12 +73,14 @@
         >
       </div>
       <div class="col-6">
-        <button class="btn btn-secondary col-12" type="button" (click)='supply()'>デポジットの実施</button>
+        <button class="btn btn-outline-success col-12" type="button" (click)='supply()'>デポジットの実施</button>
       </div>
     </div>
+  <hr *ngIf="isAccountAvailable">
     <div class="row mt-3 col-12" *ngIf="isAccountAvailable">
-      <label for="underlyingBalance">デポジット済み金額 : {{underlyingBalance | currency}}</label>
+      <label for="underlyingBalance">デポジット済み金額 : {{underlyingBalance | currency: '' : 'symbol' :'1.0-5'}} <a (click)="reloadDepositBalance()" style="cursor:pointer;"><span class="badge badge-success">リロード</span></a></label>
     </div>
+    <p style="color: red" *ngIf="intendedProjects.length > 0">寄付を実施すると、デポジットが引き出せます。</p>
     <div class="form-group row " *ngIf="isAccountAvailable">
       <div class="col-6">
         <input type="text" 
@@ -75,16 +89,43 @@
           name="redeemAmount"
           ngModel
           required
+          [disabled]="intendedProjects.length > 0"
         >
       </div>
       <div class="col-6">
-        <button class="btn btn-secondary col-12" type="button" (click)='reddm()'>引き出し</button>
+        <button class="btn btn-outline-success col-12" type="button" (click)='redeem()' [disabled]="intendedProjects.length > 0" [ngStyle]="{'cursor': intendedProjects.length > 0 ? 'not-allowed' : 'pointer'}">デポジットの引き出し</button>
       </div>
     </div>
+
   </form>
-  <div class="row">
+
+  <hr *ngIf="isAccountAvailable">
+  <div class="row" *ngIf="isAccountAvailable">
+    <div class="col-12">
+      <label for="donationAccountAddress">寄付用アカウント : {{donationAccountAddress}}</label>
+    </div>
+  </div>
+
+  <div class="row mt-3" *ngIf="intendedProjects.length != 0">
+    <div class="col-12">
+      <p>寄付予定プロジェクト</p>
+      <table class="table">
+        <tr><th>プロジェクト名</th><th>寄付予定金額</th></tr>
+        <tr *ngFor="let intendedProject of intendedProjects "><td>{{intendedProject.name}}</td><td>{{intendedProject.amount | currency: '' : 'symbol' :'1.0-0'}}</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="row" *ngIf="isAccountAvailable">
     <div class="col-12 mt-3">
-        <button class="btn btn-info" type="button" routerLink="new">新しくプロジェクトを登録する</button>
+        <button class="btn btn-dark" type="button" routerLink="new" disabled style="pointer-events: none;">新しくプロジェクトを登録する(disabled now)</button>
+    </div>
+  </div>
+  <hr>
+  <div class="row mt-3">
+    <div class="col-12">
+      <p style="font-size:0.8em;">Rinkeby Testnet Faucet</p>
+      <a class="mr-3" href="https://faucet.rinkeby.io/" target=”_blank”><img src="../../assets/ethereum.svg" alt="ethereum" style="height:30px;"></a>
+      <a href="https://usdx.dforce.network/" target=”_blank”><img src="../../assets/usdc.png" alt="usdc" style="height:30px;"></a>
     </div>
   </div>
 </div>

@@ -1,0 +1,30 @@
+.jumbotron {
+  background-size: cover;
+  background-position: center 60%;
+}
+
+h1 {
+  color:black;
+  font-family:'Times New Roman', Times, serif ;
+  font-feature-settings: "palt" 1;
+  text-align: center;
+}
+
+.card-body {
+  background-image: url("../assets/background1.jpg");
+}
+
+.nav-item a{
+  background-color: #fdfdfd;
+  color: black;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+  color: white;
+  background-color: black;
+}
+
+.network {
+  color: navy;
+  font-size: 0.8em;
+}

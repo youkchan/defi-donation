@@ -9,6 +9,7 @@ import {
   HttpClientTestingModule,
   HttpTestingController
 } from '@angular/common/http/testing';
+import { UserProjectService } from '../projects/user-project.service';
 
 function asyncData<T>(data: T) {
   return defer(() => Promise.resolve(data));
@@ -20,7 +21,7 @@ describe('DataStorageService', () => {
 
   beforeEach(() => {
     httpClientSpy = jasmine.createSpyObj('HttpClient', ['get', 'post']);
-    dataStorageService = new DataStorageService(httpClientSpy as any, new ProjectService());
+    dataStorageService = new DataStorageService(httpClientSpy as any, new ProjectService(), new UserProjectService());
   });
 
   it('fetch data', (done) => {

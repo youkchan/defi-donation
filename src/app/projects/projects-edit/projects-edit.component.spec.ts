@@ -9,9 +9,10 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
 import { ProjectsComponent } from '../projects.component';
-import { SettingComponent } from 'src/app/setting/setting.component';
 import { of } from 'rxjs';
 import { LoadingSpinnerComponent } from 'src/app/shared/loading-spinner/loading-spinner.component';
+import { HowToUseComponent } from 'src/app/how-to-use/how-to-use.component';
+import { ProcessingSpinnerComponent } from 'src/app/shared/processing-spinner/processing-spinner.component';
 
 
 
@@ -22,7 +23,7 @@ describe('ProjectsEditComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProjectsEditComponent, ProjectsComponent, SettingComponent, LoadingSpinnerComponent],
+      declarations: [ ProjectsEditComponent, ProjectsComponent, HowToUseComponent, LoadingSpinnerComponent, ProcessingSpinnerComponent],
       imports: [BrowserModule, AppRoutingModule, FormsModule, HttpClientModule],
       providers: [
         { provide: Router, useValue: routerSpy }

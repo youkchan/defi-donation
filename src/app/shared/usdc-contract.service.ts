@@ -7,6 +7,7 @@ const address = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b';
 @Injectable({providedIn: 'root'})
 export class USDCContractService {
   usdc: any;
+  decimals: number;
 
   constructor(private web3Service: Web3Service) {}
 
@@ -14,6 +15,7 @@ export class USDCContractService {
     if (!this.usdc) {
       await this.beReady();
       this.usdc = await this.web3Service.getContract(abi, address);
+      await this.setDecimals();
     }
   }
 
@@ -25,17 +27,36 @@ export class USDCContractService {
     }
   }
 
+  async setDecimals() {
+    const decimals = await this.usdc.methods.decimals().call();
+    this.decimals = decimals;
+  }
+
+  private calculateUnit(_amount: number, _isUp: boolean, _decimals: number) {
+    if (typeof _amount !== 'number') {
+      return 0;
+    }
+
+    if (_isUp) {
+      return (_amount * (10 ** this.decimals));
+    }
+    return (_amount / (10 ** this.decimals));
+  }
+
   async getBalance() {
     await this.initialize();
-    return this.usdc.methods.balanceOf(this.web3Service.getSelectedAddress()).call();
+    const balance = await this.usdc.methods.balanceOf(this.web3Service.getSelectedAddress()).call();
+    return Math.floor(this.calculateUnit(+balance, false, this.decimals));
   }
 
   async getAllowance(_address: string) {
     await this.initialize();
-    return this.usdc.methods.allowance(this.web3Service.getSelectedAddress(), _address).call();
+    const allowance =  await this.usdc.methods.allowance(this.web3Service.getSelectedAddress(), _address).call();
+    return this.calculateUnit(+allowance, false, this.decimals);
   }
 
   approve(_address: string, _amount: number) {
+    _amount = this.calculateUnit(_amount, true, this.decimals);
     return this.usdc.methods.approve(_address, _amount).
       send({from: this.web3Service.getSelectedAddress(), gas: 500000, gasPrice: 10000000000});
   }

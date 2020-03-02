@@ -12,6 +12,7 @@ export class Web3Service {
     public accountsObservable = new Subject<boolean>();
     public isConnectMetamask: boolean;
     errCount = 0;
+    network = 'Not supported Network';
 
     constructor(private ngZone: NgZone) {
       window.addEventListener('load', (event) => {
@@ -32,6 +33,8 @@ export class Web3Service {
         this.isConnectMetamask = true;
         if (ethereum.networkVersion !== '4') {
           this.isConnectMetamask = false;
+        } else {
+          this.network = 'Rinkeby Network';
         }
       } else {
         this.isConnectMetamask = false;

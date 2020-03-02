@@ -23,6 +23,8 @@ describe('USDCContractService', () => {
     expect(usdcContractServiceSpy).toBeTruthy();
     expect(usdcContractServiceSpy.usdc).not.toBeDefined();
     const expectedObj = {name: 'usdc'};
+    spyOn(usdcContractServiceSpy, 'setDecimals');
+    usdcContractServiceSpy.decimals = 6;
     usdcContractServiceSpy.initialize().then((result) => {
       expect(usdcContractServiceSpy.usdc).toEqual(expectedObj);
       done();

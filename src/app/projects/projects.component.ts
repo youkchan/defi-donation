@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, Input, Output, EventEmitter, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild} from '@angular/core';
 import { ProjectService } from './project.service';
 import { Project } from './project.model';
 import { Subscription } from 'rxjs';
@@ -8,6 +8,9 @@ import { DeFiDonationContractService } from '../shared/defidonation-contract.ser
 import { USDCContractService } from '../shared/usdc-contract.service';
 import { NgForm } from '@angular/forms';
 import { CompoundAPIService } from '../shared/compound-api.service';
+import { UserProject } from './user-project.model';
+import { UserProjectService } from './user-project.service';
+import { ProcessingSpinnerComponent } from '../shared/processing-spinner/processing-spinner.component';
 
 @Component({
   selector: 'app-projects',
@@ -28,7 +31,13 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   underlyingBalance = 0;
   interestRate: number;
   dueDate: number;
+  intendedProjects: {name: string, id: string, amount: number, address: string}[] = [];
+  isDonatedList: number[] = [];
+  isProcessing = false;
+  donationAccountAddress: string;
+  interestRateSubscription: Subscription;
   @ViewChild('donationForm', { static: false }) donationForm: NgForm;
+  @ViewChild('addDonationForm', { static: false }) addDonationForm: NgForm;
 
   constructor(
     private projectService: ProjectService,
@@ -37,7 +46,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     private usdcContractService: USDCContractService,
     private compoundAPIService: CompoundAPIService,
     private web3Service: Web3Service,
-  //  private ngZone: NgZone
+    private userProjectService: UserProjectService
     ) { }
 
   ngOnInit() {
@@ -50,40 +59,52 @@ export class ProjectsComponent implements OnInit, OnDestroy {
         }
       );
     this.dataStorageService.fetchProjects().subscribe();
+    this.initialize();
 
     this.accountSubscription = this.web3Service.accountsObservable.subscribe(() => {
-      this.defiDonationContractService.initialize()
-      .then(async () => {
-        await this.defiDonationContractService.setDonationAccount();
-      })
-      .then(() => {
-        this.checkDonationAccount();
-      })
-      .then(async () => {
-        this.compoundAPIService.getSupplyRate().subscribe((result) => {
-          this.interestRate = result;
-        });
-      })
-      .then(() => {
-        this.getUSDCBalance();
-      })
-      .then(async () => {
-        const isAccountExists = await this.defiDonationContractService.isAccountExists();
-        if (isAccountExists) {
-          this.getUSDCAllowance();
-        }
-      })
-      .then(() => {
-        this.isLoading = false;
-      });
+      this.initialize();
     });
 
+    this.interestRateSubscription = this.compoundAPIService.getSupplyRate('rinkeby').subscribe((result) => {
+      this.interestRate = result;
+    });
+
+  }
+
+  initialize() {
+    this.defiDonationContractService.initialize()
+    .then(async () => {
+      await this.usdcContractService.initialize();
+    })
+    .then(async () => {
+      await this.defiDonationContractService.setDonationAccount();
+    })
+    .then(() => {
+      this.checkDonationAccount();
+    })
+    .then(() => {
+      this.getUSDCBalance();
+    })
+    .then(async () => {
+      const isAccountExists = await this.defiDonationContractService.isAccountExists();
+      if (isAccountExists) {
+        this.getDonationAccount();
+        this.getUSDCAllowance();
+      }
+    })
+    .then(() => {
+      this.getIntendedProjects();
+    })
+    .then(() => {
+      this.isLoading = false;
+    });
 
   }
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
     this.accountSubscription.unsubscribe();
+    this.interestRateSubscription.unsubscribe();
   }
 
   onRight() {
@@ -100,9 +121,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       return;
     }
     const monthlyInterest = this.underlyingBalance * this.interestRate / 12;
-
-  //  this.dueDate = +val / monthlyInterest;
-    this.dueDate = Math.floor(+val / monthlyInterest * 1000) * 0.001;
+    this.dueDate = +val / monthlyInterest;
   }
 
   onLeft() {
@@ -112,6 +131,14 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.currentPagenation--;
     this.reloadProject();
     this.checkLimit();
+  }
+
+  getDonationAccount() {
+    this.defiDonationContractService.beReady().then(() => {
+      this.defiDonationContractService.getDonationAccount().then((data) => {
+        this.donationAccountAddress = data;
+      });
+    });
   }
 
   reloadProject() {
@@ -128,10 +155,51 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     }
   }
 
+  getIntendedProjects() {
+    this.dataStorageService.fetchUserProjects(this.web3Service.getSelectedAddress()).subscribe((result) => {
+      const projects = this.projectService.getProjects();
+      this.intendedProjects = [];
+      result.forEach(intendedProject => {
+        projects.forEach(project => {
+          if (intendedProject.projectAddress === project.address) {
+            this.intendedProjects.push(
+              {
+                name: project.name,
+                id: intendedProject.id,
+                amount: intendedProject.amount,
+                address: project.address
+              }
+              );
+         }
+        });
+      });
+
+      if (this.intendedProjects.length === 0) {
+        this.isDonatedList[0] = null;
+        this.isDonatedList[1] = null;
+      }
+
+      this.projects.forEach( (diplayedProject, index) => {
+        for (const intendedProject of this.intendedProjects) {
+          if (diplayedProject.address === intendedProject.address) {
+            this.isDonatedList[index] = intendedProject.amount;
+            break;
+          } else {
+            this.isDonatedList[index] = null;
+          }
+        }
+      });
+    });
+  }
+
   createAccount() {
-    this.defiDonationContractService.beReady().then(async () => {
-      const result = await this.defiDonationContractService.createDonationAccount();
-      console.log(result.transactionHash);
+    this.isProcessing = true;
+    this.defiDonationContractService.beReady().then( () => {
+      this.defiDonationContractService.createDonationAccount().then( (result) => {
+        console.log(result.transactionHash);
+        this.initialize();
+        this.isProcessing = false;
+      });
     });
   }
 
@@ -172,10 +240,16 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   approve() {
+    const amount = +this.donationForm.value.approveAmount;
+    this.isProcessing = true;
     this.usdcContractService.beReady().then(() => {
       this.defiDonationContractService.getDonationAccount().then((address) => {
-        this.usdcContractService.approve(address, +this.donationForm.value.approveAmount).then((data) => {
-          console.log(data);
+        this.usdcContractService.approve(address, amount).then((data) => {
+          this.getUSDCAllowance()
+          .then(() => {
+            this.isProcessing = false;
+            this.donationForm.reset();
+          });
         });
       });
    });
@@ -183,10 +257,18 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   supply() {
+    this.isProcessing = true;
     this.defiDonationContractService.beReady().then(async () => {
       try {
-        const result = await this.defiDonationContractService.supply(+this.donationForm.value.supplyAmount);
-        console.log(result);
+        const result = await this.defiDonationContractService.supply(
+          +this.donationForm.value.supplyAmount,
+          this.usdcContractService.decimals
+          );
+        this.getUSDCBalance();
+        this.getUSDCAllowance();
+        this.getUnderlyingBalance();
+        this.isProcessing = false;
+        this.donationForm.reset();
       } catch (e) {
         const delay = new Promise(resolve => setTimeout(resolve, 100));
         await delay;
@@ -195,26 +277,31 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     });
   }
 
-  /*redeem() {
+  redeem() {
+    this.isProcessing = true;
     this.defiDonationContractService.beReady().then(async () => {
-      try{
-        let result = await this.defiDonationContractService.redeem(+this.donationForm.value.redeemAmount);
-        console.log(result);
-      } catch(e) {
+      try {
+        const result = await this.defiDonationContractService.redeem(
+          +this.donationForm.value.redeemAmount,
+          this.usdcContractService.decimals
+          );
+        this.getUnderlyingBalance();
+        this.getUSDCBalance();
+        this.isProcessing = false;
+        this.donationForm.reset();
+      } catch (e) {
         const delay = new Promise(resolve => setTimeout(resolve, 100));
         await delay;
         return await this.redeem();
       }
     });
-  }*/
-
-
+  }
 
   getUnderlyingBalance() {
     this.defiDonationContractService.beReady().then(async () => {
       try {
-        const result = await this.defiDonationContractService.getUnderlyingBalance();
-        this.underlyingBalance = result;
+        const result = await this.defiDonationContractService.getUnderlyingBalance(this.usdcContractService.decimals);
+        this.underlyingBalance = +result;
       } catch (e) {
         const delay = new Promise(resolve => setTimeout(resolve, 100));
         await delay;
@@ -222,4 +309,79 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  reloadDepositBalance() {
+    this.isProcessing = true;
+    setTimeout(async () => {
+      await this.getUnderlyingBalance();
+      this.isProcessing = false;
+    }, 500);
+  }
+
+  addDonateProject(_index: number) {
+    this.isProcessing = true;
+    const amount = +this.addDonationForm.value['donateAmount' + _index];
+    this.defiDonationContractService.beReady().then(async () => {
+      try {
+        const userProject = new UserProject(this.web3Service.getSelectedAddress(), amount , this.projects[_index].address, '', 0);
+        const result = await this.defiDonationContractService.addDonateProject(
+          this.projects[_index].address,
+          amount,
+          this.usdcContractService.decimals
+          );
+        this.dataStorageService.saveUserProject(userProject).subscribe(
+          (response) => {
+            userProject.id = response.name;
+            this.userProjectService.addUserProject(userProject);
+            this.getIntendedProjects();
+            this.isProcessing = false;
+            this.addDonationForm.reset();
+            this.dueDate = null;
+          }
+        );
+
+     } catch (e) {
+        const delay = new Promise(resolve => setTimeout(resolve, 100));
+        await delay;
+        return await this.supply();
+      }
+    });
+
+  }
+
+  executeDonateProject(_index: number) {
+    this.isProcessing = true;
+    this.defiDonationContractService.beReady().then(async () => {
+      try {
+        const result = await this.defiDonationContractService.donate(this.projects[_index].address);
+        console.log(result);
+
+        const userProjects = this.userProjectService.getUserProjects();
+        let index: string;
+
+        let deleteObj: {[key: string]: UserProject};
+        userProjects.forEach((element) => {
+          if (element.projectAddress === this.projects[_index].address) {
+            index = element.id;
+            element.delFlg = 1;
+            deleteObj = {[index]: element};
+          }
+        });
+
+        this.dataStorageService.deleteSpecificUserProject(deleteObj).subscribe(() => {
+          this.userProjectService.deleteUserProject(index);
+          this.getIntendedProjects();
+          this.getUnderlyingBalance();
+          this.isProcessing = false;
+        });
+      } catch (e) {
+        const delay = new Promise(resolve => setTimeout(resolve, 100));
+        await delay;
+        return await this.supply();
+      }
+    });
+
+
+  }
+
 }

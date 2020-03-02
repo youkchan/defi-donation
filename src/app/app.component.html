@@ -1,23 +1,24 @@
-<div class="container">
-
-    <h1>DeFi Donation</h1>
-
-    <p>Deposit And Donate.</p>
-    
-    <p>DeFi DonationはDeFiからの利息の一部をプロジェクトに寄付できるサービスです</p>
-    
-    <div class="card">
+<div class="container mb-3" >
+    <h1 class="mt-4 mb-4">DeFi Donation</h1>
+    <div class="card" style="max-width: 800px;margin-left: auto;margin-right: auto;">
         <div class="card-header">
-          <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/projects" routerLinkActive="active">Projects</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" routerLink="/setting" routerLinkActive="active">Setting</a>
+          <ul class="nav navbar-right" style="float: right;">
+            <li>
+              <a class="network">{{network}}</a>
             </li>
           </ul>
-        </div>
+ 
+          <ul class="nav nav-pills card-header-pills">
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/projects" routerLinkActive="active">PROJECTS</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/howtouse" routerLinkActive="active">HOW TO USE</a>
+            </li>
+          </ul>
+       </div>
         <div class="card-body">
-          <router-outlet></router-outlet>
+          <router-outlet ></router-outlet>
         </div>
+      </div>
       </div>

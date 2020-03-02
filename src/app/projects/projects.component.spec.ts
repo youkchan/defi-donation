@@ -8,6 +8,12 @@ import { Project } from './project.model';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
+import { ProcessingSpinnerComponent } from '../shared/processing-spinner/processing-spinner.component';
+import { DeFiDonationContractService } from '../shared/defidonation-contract.service';
+import { USDCContractService } from '../shared/usdc-contract.service';
+import { CompoundAPIService } from '../shared/compound-api.service';
+import { Web3Service } from '../shared/web3.service';
+import { UserProjectService } from './user-project.service';
 
 
 
@@ -22,9 +28,17 @@ describe('ProjectsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProjectsComponent, LoadingSpinnerComponent ],
+      declarations: [ ProjectsComponent, LoadingSpinnerComponent, ProcessingSpinnerComponent ],
       imports: [HttpClientModule, BrowserModule, FormsModule],
-      providers: [ProjectService, DataStorageService]
+      providers: [
+        ProjectService,
+        DataStorageService,
+        DeFiDonationContractService,
+        USDCContractService,
+        CompoundAPIService,
+        Web3Service,
+        UserProjectService
+      ]
     });
   }));
 

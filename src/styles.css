@@ -1,1 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+body {
+  background-color: #fdfdfd;
+  font-family: 'ヒラギノ角ゴシック', Times, serif;
+  font-feature-settings: "palt" 1;
+}

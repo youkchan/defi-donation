@@ -33,7 +33,7 @@ describe('CompoundAPIService', () => {
     };
 
     httpClientSpy.get.and.returnValue(asyncData(expectedProjects));
-    compoundAPIService.getSupplyRate().subscribe(
+    compoundAPIService.getSupplyRate('mainnet').subscribe(
       (response) => {
         expect(response).toEqual(+expectedProjects.cToken[0].supply_rate.value);
         done();

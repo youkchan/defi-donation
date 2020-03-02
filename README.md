@@ -1,5 +1,11 @@
 [![CircleCI](https://circleci.com/gh/youkchan/defi-donation.svg?style=shield)](https://circleci.com/gh/youkchan/defi-donation)
 
+#Tech stack: 
+Frontend : Angular 8
+Backend : Firebase (Hosting / Realtime Database)
+SmartContract : Solidity (Compound Protocol, USDC Protocol)
+CI/CD : CircleCI
+
 # DefiDonation
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.24.
