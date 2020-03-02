@@ -5,7 +5,7 @@
   <app-processing-spinner></app-processing-spinner>
 </div>
 <div *ngIf="!isLoading">
-  <form (ngSubmit)="onSubmit()" #addDonationForm="ngForm">
+  <form #addDonationForm="ngForm">
  <!--<a class="arrow" style="left: 0px;" *ngIf="currentPagenation != 0"(click)="onLeft()"><i class="fa fa-angle-left fa-3x" aria-hidden="true"></i></a> -->
   <!--<a class="arrow" style="right: 0px;" *ngIf="!isLimit" (click)="onRight()"><i class="fa fa-angle-right fa-3x" aria-hidden="true"></i></a>-->
   <div class="row mt-2" >
@@ -32,7 +32,7 @@
   <p style="color: red" *ngIf="dueDate">入力した寄付金額は、約{{dueDate | number:'1.0-2'}}ヶ月後に、利息として付与される予定です。</p>
   <p style="color: red" *ngIf="dueDate">現在(Rinkeby)、固定利息(7.5%)で計算していますが、利率は状況に応じて変化します</p>
 </form>
-  <form (ngSubmit)="onSubmit()" #donationForm="ngForm">
+  <form #donationForm="ngForm">
   <div class="row mt-3" *ngIf="!isAccountAvailable">
     <div class="col-12">
       <span style=" color:red;">最初に寄付用のアカウントを作成してください</span>

@@ -7,7 +7,7 @@ jobs:
       - checkout
       - run: echo "Start build"
       - run: yarn install
-      - run: yarn build
+      - run: yarn build -- --prod
   lint:
     docker:
       - image: circleci/node:13.7.0-stretch-browsers
