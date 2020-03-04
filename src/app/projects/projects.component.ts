@@ -36,6 +36,9 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   isProcessing = false;
   donationAccountAddress: string;
   interestRateSubscription: Subscription;
+  defaultErrorMessage = 'エラーが発生しました。ネットワーク環境や、メタマスクの設定を確認してください!';
+  errorMessage = this.defaultErrorMessage;
+  isError = false;
   @ViewChild('donationForm', { static: false }) donationForm: NgForm;
   @ViewChild('addDonationForm', { static: false }) addDonationForm: NgForm;
 
@@ -222,7 +225,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   getUSDCBalance() {
-    return this.usdcContractService.beReady().then(() => {
+    this.usdcContractService.beReady().then(() => {
       this.usdcContractService.getBalance().then((data) => {
         this.usdcBalance = data;
       });
@@ -230,7 +233,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   getUSDCAllowance() {
-    return this.usdcContractService.beReady().then(() => {
+    this.usdcContractService.beReady().then(() => {
       this.defiDonationContractService.getDonationAccount().then((address) => {
         this.usdcContractService.getAllowance(address).then((data) => {
           this.usdcAllowanceBalance = data;
@@ -243,14 +246,11 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     const amount = +this.donationForm.value.approveAmount;
     this.isProcessing = true;
     this.usdcContractService.beReady().then(() => {
-      this.defiDonationContractService.getDonationAccount().then((address) => {
-        this.usdcContractService.approve(address, amount).then((data) => {
-          this.getUSDCAllowance()
-          .then(() => {
-            this.isProcessing = false;
-            this.donationForm.reset();
-          });
-        });
+      this.defiDonationContractService.getDonationAccount().then(async (address) => {
+        await this.usdcContractService.approve(address, amount);
+        await this.getUSDCAllowance();
+        this.isProcessing = false;
+        this.donationForm.reset();
       });
    });
 
