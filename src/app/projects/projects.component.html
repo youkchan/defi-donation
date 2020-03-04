@@ -4,6 +4,7 @@
 <div *ngIf="isProcessing">
   <app-processing-spinner></app-processing-spinner>
 </div>
+<div class="alert alert-danger" role="alert" *ngIf="isError && !isLoading">{{errorMessage}}</div>
 <div *ngIf="!isLoading">
   <form #addDonationForm="ngForm">
  <!--<a class="arrow" style="left: 0px;" *ngIf="currentPagenation != 0"(click)="onLeft()"><i class="fa fa-angle-left fa-3x" aria-hidden="true"></i></a> -->

@@ -33,31 +33,43 @@ export class USDCContractService {
   }
 
   private calculateUnit(_amount: number, _isUp: boolean, _decimals: number) {
-    if (typeof _amount !== 'number') {
+    if (typeof _amount !== 'number' || _amount === 0) {
       return 0;
     }
 
     if (_isUp) {
-      return (_amount * (10 ** this.decimals));
+      return (_amount * (10 ** _decimals));
     }
-    return (_amount / (10 ** this.decimals));
+    return (_amount / (10 ** _decimals));
   }
 
   async getBalance() {
-    await this.initialize();
-    const balance = await this.usdc.methods.balanceOf(this.web3Service.getSelectedAddress()).call();
-    return Math.floor(this.calculateUnit(+balance, false, this.decimals));
+    try {
+      await this.initialize();
+      const balance = await this.usdc.methods.balanceOf(this.web3Service.getSelectedAddress()).call();
+      return Math.floor(this.calculateUnit(+balance, false, this.decimals));
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
   async getAllowance(_address: string) {
-    await this.initialize();
-    const allowance =  await this.usdc.methods.allowance(this.web3Service.getSelectedAddress(), _address).call();
-    return this.calculateUnit(+allowance, false, this.decimals);
-  }
+    try {
+      await this.initialize();
+      const allowance =  await this.usdc.methods.allowance(this.web3Service.getSelectedAddress(), _address).call();
+      return this.calculateUnit(+allowance, false, this.decimals);
+    } catch (e) {
+      throw new Error(e.message);
+    }
+ }
 
-  approve(_address: string, _amount: number) {
-    _amount = this.calculateUnit(_amount, true, this.decimals);
-    return this.usdc.methods.approve(_address, _amount).
-      send({from: this.web3Service.getSelectedAddress(), gas: 500000, gasPrice: 10000000000});
+  async approve(_address: string, _amount: number) {
+    try {
+      _amount = this.calculateUnit(_amount, true, this.decimals);
+      await this.usdc.methods.approve(_address, _amount).
+        send({from: this.web3Service.getSelectedAddress(), gas: 500000, gasPrice: 10000000000});
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 }
