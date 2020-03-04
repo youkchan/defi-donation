@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http/';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { Const } from './const';
 
 @Injectable({providedIn: 'root'})
 export class CompoundAPIService {
@@ -12,19 +13,19 @@ export class CompoundAPIService {
   ) {}
 
   getSupplyRate(network: string): Observable<number> {
-    if (network === 'mainnet') {
+    if (network === Const.MAINNET_NETWORK) {
       return this.http.get(this.mainnetURL).pipe(map( (result: {cToken: [{symbol: string, supply_rate: {value: string}}]}) => {
           let cToken: {symbol: string, supply_rate: {value: string}};
           result.cToken.forEach(element => {
-            if (element.symbol === 'cUSDC') {
+            if (element.symbol === Const.CUSDC_SYMBOL) {
               cToken = element;
             }
           });
           return +cToken.supply_rate.value;
       }));
-    } else if (network === 'rinkeby') {
+    } else if (network === Const.RINKEBY_NETWORK) {
       return new Observable<number>( (observer) => {
-        observer.next(0.075);
+        observer.next(Const.RINKEBY_INTEREST);
       });
     }
   }

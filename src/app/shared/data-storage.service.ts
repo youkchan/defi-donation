@@ -42,13 +42,9 @@ export class DataStorageService {
   }
 
   deleteSpecificUserProject(deleteUserProject: {[key: string]: UserProject} ) {
-    return this.http.patch('https://defi-donation.firebaseio.com/userProjects.json?',
+    return this.http.patch('https://defi-donation.firebaseio.com/userProjects.json',
       deleteUserProject
     );
-  }
-
-  fetchSpecificUserProjects() {
-    return this.http.get<UserProject[]>('https://defi-donation.firebaseio.com/userProjects.json?orderBy="id"&equalTo=1');
   }
 
   saveProject(project: Project) {

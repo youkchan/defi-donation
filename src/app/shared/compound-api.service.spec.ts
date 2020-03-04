@@ -1,15 +1,6 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { DataStorageService } from './data-storage.service';
-import { HttpEvent, HttpEventType } from '@angular/common/http';
-import { ProjectService } from '../projects/project.service';
 import { defer } from 'rxjs';
-import { Project } from '../projects/project.model';
-
-import {
-  HttpClientTestingModule,
-  HttpTestingController
-} from '@angular/common/http/testing';
 import { CompoundAPIService } from './compound-api.service';
+import { Const } from './const';
 
 function asyncData<T>(data: T) {
   return defer(() => Promise.resolve(data));
@@ -24,7 +15,7 @@ describe('CompoundAPIService', () => {
     compoundAPIService = new CompoundAPIService(httpClientSpy as any);
   });
 
-  it('getSupplyRate', (done) => {
+  it('getSupplyRate mainnet', (done) => {
     const expectedProjects: {cToken: {symbol: string, supply_rate: {value: string}}[]} = {
       cToken: [
         {symbol: 'cUSDC', supply_rate: {value: '0.01'}},
@@ -33,9 +24,18 @@ describe('CompoundAPIService', () => {
     };
 
     httpClientSpy.get.and.returnValue(asyncData(expectedProjects));
-    compoundAPIService.getSupplyRate('mainnet').subscribe(
+    compoundAPIService.getSupplyRate(Const.MAINNET_NETWORK).subscribe(
       (response) => {
         expect(response).toEqual(+expectedProjects.cToken[0].supply_rate.value);
+        done();
+      }
+    );
+  });
+
+  it('getSupplyRate rinkeby', (done) => {
+    compoundAPIService.getSupplyRate(Const.RINKEBY_NETWORK).subscribe(
+      (response) => {
+        expect(Const.RINKEBY_INTEREST).toEqual(response);
         done();
       }
     );
