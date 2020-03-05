@@ -11,6 +11,7 @@ import { CompoundAPIService } from '../shared/compound-api.service';
 import { UserProject } from './user-project.model';
 import { UserProjectService } from './user-project.service';
 import { ProcessingSpinnerComponent } from '../shared/processing-spinner/processing-spinner.component';
+import { Const } from '../shared/const';
 
 @Component({
   selector: 'app-projects',
@@ -93,10 +94,8 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       if (isAccountExists) {
         this.getDonationAccount();
         this.getUSDCAllowance();
+        this.getIntendedProjects();
       }
-    })
-    .then(() => {
-      this.getIntendedProjects();
     })
     .then(() => {
       this.isLoading = false;
@@ -119,14 +118,6 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.checkLimit();
   }
 
-  calculateDuedate(val: string, index: number) {
-    if (isNaN(Number(val))) {
-      return;
-    }
-    const monthlyInterest = this.underlyingBalance * this.interestRate / 12;
-    this.dueDate = +val / monthlyInterest;
-  }
-
   onLeft() {
     if (this.currentPagenation <= 0) {
       return;
@@ -134,6 +125,14 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.currentPagenation--;
     this.reloadProject();
     this.checkLimit();
+  }
+
+  calculateDuedate(val: string, index: number) {
+    if (isNaN(Number(val))) {
+      return;
+    }
+    const monthlyInterest = this.underlyingBalance * this.interestRate / 12;
+    this.dueDate = +val / monthlyInterest;
   }
 
   getDonationAccount() {
@@ -195,11 +194,10 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     });
   }
 
-  createAccount() {
+  async createAccount() {
     this.isProcessing = true;
     this.defiDonationContractService.beReady().then( () => {
       this.defiDonationContractService.createDonationAccount().then( (result) => {
-        console.log(result.transactionHash);
         this.initialize();
         this.isProcessing = false;
       });
@@ -207,7 +205,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   checkDonationAccount() {
-    return this.defiDonationContractService.beReady().then(async () => {
+    this.defiDonationContractService.beReady().then(async () => {
       try {
         this.defiDonationContractService.isAccountExists()
         .then((data) => {
@@ -217,6 +215,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
           }
         });
       } catch (e) {
+        console.log(e.message);
         const delay = new Promise(resolve => setTimeout(resolve, 100));
         await delay;
         return await this.checkDonationAccount();
@@ -232,69 +231,73 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     });
   }
 
-  getUSDCAllowance() {
-    this.usdcContractService.beReady().then(() => {
-      this.defiDonationContractService.getDonationAccount().then((address) => {
-        this.usdcContractService.getAllowance(address).then((data) => {
-          this.usdcAllowanceBalance = data;
-        });
-      });
-    });
+  async getUSDCAllowance() {
+    const address = await this.defiDonationContractService.getDonationAccount();
+    console.log(address);
+    this.usdcAllowanceBalance = await this.usdcContractService.getAllowance(address);
   }
 
-  approve() {
+  async approve() {
     const amount = +this.donationForm.value.approveAmount;
     this.isProcessing = true;
-    this.usdcContractService.beReady().then(() => {
-      this.defiDonationContractService.getDonationAccount().then(async (address) => {
-        await this.usdcContractService.approve(address, amount);
-        await this.getUSDCAllowance();
-        this.isProcessing = false;
+    try {
+      const address = await this.defiDonationContractService.getDonationAccount();
+      await this.usdcContractService.approve(address, amount);
+      await this.getUSDCAllowance();
+      this.donationForm.reset();
+    } catch (e) {
+      if (!e.message.includes(Const.METAMASK_CANCEL)) {
+        this.isError = true;
+      }
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  async supply() {
+    this.isProcessing = true;
+    try {
+      await this.defiDonationContractService.supply(
+        +this.donationForm.value.supplyAmount,
+        this.usdcContractService.decimals
+        );
+      Promise.all([
+        this.getUSDCBalance(),
+        this.getUSDCAllowance(),
+        this.getUnderlyingBalance(),
+      ]).then(() => {
         this.donationForm.reset();
       });
-   });
-
+     } catch (e) {
+      if (!e.message.includes(Const.METAMASK_CANCEL)) {
+        this.isError = true;
+      }
+    } finally {
+      this.isProcessing = false;
+    }
   }
 
-  supply() {
+  async redeem() {
     this.isProcessing = true;
-    this.defiDonationContractService.beReady().then(async () => {
-      try {
-        const result = await this.defiDonationContractService.supply(
-          +this.donationForm.value.supplyAmount,
-          this.usdcContractService.decimals
-          );
-        this.getUSDCBalance();
-        this.getUSDCAllowance();
-        this.getUnderlyingBalance();
-        this.isProcessing = false;
-        this.donationForm.reset();
-      } catch (e) {
-        const delay = new Promise(resolve => setTimeout(resolve, 100));
-        await delay;
-        return await this.supply();
-      }
-    });
-  }
+    try {
+      await this.defiDonationContractService.redeem(
+        +this.donationForm.value.redeemAmount,
+        this.usdcContractService.decimals
+        );
 
-  redeem() {
-    this.isProcessing = true;
-    this.defiDonationContractService.beReady().then(async () => {
-      try {
-        const result = await this.defiDonationContractService.redeem(
-          +this.donationForm.value.redeemAmount,
-          this.usdcContractService.decimals
-          );
-        this.getUnderlyingBalance();
-        this.getUSDCBalance();
-        this.isProcessing = false;
+      Promise.all([
+        this.getUSDCBalance(),
+        this.getUnderlyingBalance(),
+      ]).then(() => {
         this.donationForm.reset();
-      } catch (e) {
-        const delay = new Promise(resolve => setTimeout(resolve, 100));
-        await delay;
-        return await this.redeem();
+      });
+     } catch (e) {
+      if (!e.message.includes(Const.METAMASK_CANCEL)) {
+        this.isError = true;
       }
-    });
+    } finally {
+      this.isProcessing = false;
+    }
   }
 
   getUnderlyingBalance() {
@@ -324,7 +327,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.defiDonationContractService.beReady().then(async () => {
       try {
         const userProject = new UserProject(this.web3Service.getSelectedAddress(), amount , this.projects[_index].address, '', 0);
-        const result = await this.defiDonationContractService.addDonateProject(
+        await this.defiDonationContractService.addDonateProject(
           this.projects[_index].address,
           amount,
           this.usdcContractService.decimals
@@ -343,7 +346,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
      } catch (e) {
         const delay = new Promise(resolve => setTimeout(resolve, 100));
         await delay;
-        return await this.supply();
+        return await this.addDonateProject(_index);
       }
     });
 
@@ -353,8 +356,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.isProcessing = true;
     this.defiDonationContractService.beReady().then(async () => {
       try {
-        const result = await this.defiDonationContractService.donate(this.projects[_index].address);
-        console.log(result);
+        await this.defiDonationContractService.donate(this.projects[_index].address);
 
         const userProjects = this.userProjectService.getUserProjects();
         let index: string;
@@ -377,7 +379,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       } catch (e) {
         const delay = new Promise(resolve => setTimeout(resolve, 100));
         await delay;
-        return await this.supply();
+        return await this.executeDonateProject(_index);
       }
     });
 
