@@ -55,66 +55,92 @@ export class DeFiDonationContractService {
     }
   }
 
-  isAccountExists(): Promise<any> {
-    return this.deFiDonation.methods.isAccountExists().call({from: this.web3Service.getSelectedAddress()});
+  async isAccountExists(): Promise<boolean> {
+    try {
+      await this.initialize();
+      return await this.deFiDonation.methods.isAccountExists().call({from: this.web3Service.getSelectedAddress()});
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
-  /*getSupplyRate(): Promise<any> {
-    return this.deFiDonation.methods.getSupplyRate().call({from: this.web3Service.getSelectedAddress()});
-  }*/
-
-  getDonationAccount(): Promise<any> {
-    return this.deFiDonation.methods.getDonationAccount().call({from: this.web3Service.getSelectedAddress()});
+  async getDonationAccount(): Promise<string> {
+    try {
+      await this.initialize();
+      return await this.deFiDonation.methods.getDonationAccount().call({from: this.web3Service.getSelectedAddress()});
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
-  createDonationAccount() {
-    return this.deFiDonation.methods.createDonationAccount()
-      .send({from: this.web3Service.getSelectedAddress(), gas: 1200000, gasPrice: 10000000000})
-      .catch ((error) => {
-        if (error.message.includes('Transaction has been reverted by the EVM')) {
-          console.log('Lack of Gas');
-          return 'Lack of Gas';
-        }
-      });
+  async createDonationAccount(): Promise<void> {
+    try {
+      await this.initialize();
+      const tx = await this.deFiDonation.methods.createDonationAccount()
+        .send({from: this.web3Service.getSelectedAddress(), gas: 1200000, gasPrice: 10000000000});
+      console.log(tx);
+    } catch (e) {
+      if (e.message.includes('Transaction has been reverted by the EVM')) {
+        e.message = 'Lack of Gas';
+      }
+      throw new Error(e.message);
+    }
   }
 
-  supply(_amount: number, _decimals: number) {
-    _amount = this.calculateUnit(_amount, true, _decimals);
-    return this.donationAccount.methods.supply(_amount)
-      .send({from: this.web3Service.getSelectedAddress(), gas: 700000, gasPrice: 10000000000})
-      .catch ((error) => {
-        console.log(error);
-      });
+  async supply(_amount: number, _decimals: number): Promise<void> {
+    try {
+      await this.initialize();
+      _amount = this.calculateUnit(_amount, true, _decimals);
+      const tx = await this.donationAccount.methods.supply(_amount)
+        .send({from: this.web3Service.getSelectedAddress(), gas: 400000, gasPrice: 10000000000});
+      console.log(tx);
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
-  async getUnderlyingBalance(_decimals: number): Promise<any> {
-    const balance =  await this.donationAccount.methods.getUnderlyingBalance().call({from: this.web3Service.getSelectedAddress()});
-    return this.calculateUnit(+balance, false, _decimals);
+  async getUnderlyingBalance(_decimals: number): Promise<number> {
+    try {
+      await this.initialize();
+      const balance =  await this.donationAccount.methods.getUnderlyingBalance().call({from: this.web3Service.getSelectedAddress()});
+      return this.calculateUnit(+balance, false, _decimals);
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
-  redeem(_amount: number, _decimals: number) {
-    _amount = this.calculateUnit(_amount, true, _decimals);
-    return this.donationAccount.methods.redeem(_amount)
-      .send({from: this.web3Service.getSelectedAddress(), gas: 700000, gasPrice: 10000000000})
-      .catch((error) => {
-        console.log(error);
-      });
+  async redeem(_amount: number, _decimals: number): Promise<void> {
+    try {
+      await this.initialize();
+      _amount = this.calculateUnit(_amount, true, _decimals);
+      const tx = await this.donationAccount.methods.redeem(_amount)
+        .send({from: this.web3Service.getSelectedAddress(), gas: 200000, gasPrice: 10000000000});
+      console.log(tx);
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
-  addDonateProject(_address: string, _amount: number, _decimals: number) {
-    _amount = this.calculateUnit(_amount, true, _decimals);
-    return this.donationAccount.methods.addDonateProject(_address, _amount)
-      .send({from: this.web3Service.getSelectedAddress(), gas: 700000, gasPrice: 10000000000})
-      .catch((error) => {
-        console.log(error);
-      });
+  async addDonateProject(_address: string, _amount: number, _decimals: number): Promise<void> {
+    try {
+      await this.initialize();
+      _amount = this.calculateUnit(_amount, true, _decimals);
+      const tx = await this.donationAccount.methods.addDonateProject(_address, _amount)
+        .send({from: this.web3Service.getSelectedAddress(), gas: 100000, gasPrice: 10000000000});
+      console.log(tx);
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
-  donate(_address: string) {
-    return this.donationAccount.methods.donate(_address)
-      .send({from: this.web3Service.getSelectedAddress(), gas: 700000, gasPrice: 10000000000})
-      .catch((error) => {
-        console.log(error);
-      });
+  async donate(_address: string): Promise<void> {
+    try {
+      await this.initialize();
+      const tx = await this.donationAccount.methods.donate(_address)
+        .send({from: this.web3Service.getSelectedAddress(), gas: 200000, gasPrice: 10000000000});
+      console.log(tx);
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 }

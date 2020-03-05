@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Web3Service } from './web3.service';
+import { Const } from './const';
 const usdcContract = require('../../../abi/FiatTokenV1.json');
 const abi = usdcContract.abi;
 const address = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b';
@@ -27,7 +28,7 @@ export class USDCContractService {
     }
   }
 
-  async setDecimals() {
+  private async setDecimals() {
     const decimals = await this.usdc.methods.decimals().call();
     this.decimals = decimals;
   }
@@ -43,7 +44,7 @@ export class USDCContractService {
     return (_amount / (10 ** _decimals));
   }
 
-  async getBalance() {
+  async getBalance(): Promise<number> {
     try {
       await this.initialize();
       const balance = await this.usdc.methods.balanceOf(this.web3Service.getSelectedAddress()).call();
@@ -53,7 +54,7 @@ export class USDCContractService {
     }
   }
 
-  async getAllowance(_address: string) {
+  async getAllowance(_address: string): Promise<number> {
     try {
       await this.initialize();
       const allowance =  await this.usdc.methods.allowance(this.web3Service.getSelectedAddress(), _address).call();
@@ -65,9 +66,11 @@ export class USDCContractService {
 
   async approve(_address: string, _amount: number) {
     try {
+      await this.initialize();
       _amount = this.calculateUnit(_amount, true, this.decimals);
-      await this.usdc.methods.approve(_address, _amount).
-        send({from: this.web3Service.getSelectedAddress(), gas: 500000, gasPrice: 10000000000});
+      const tx = await this.usdc.methods.approve(_address, _amount).
+        send({from: this.web3Service.getSelectedAddress(), gas: 50000, gasPrice: 10000000000});
+      console.log(tx);
     } catch (e) {
       throw new Error(e.message);
     }

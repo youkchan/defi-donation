@@ -71,6 +71,7 @@ describe('USDCContractService', () => {
     const methodsObj = jasmine.createSpyObj('Ethereum', ['balanceOf']);
     methodsObj.balanceOf.and.returnValue(callObj);
     spyOn(usdcContractServiceSpy.web3Service, 'getSelectedAddress').and.returnValue('0x8225Afb2C5A6A68525E22A7E237BcE1600A665f5');
+    spyOn(usdcContractServiceSpy, 'initialize');
 
     usdcContractServiceSpy.usdc = {methods: methodsObj};
     await expectAsync(usdcContractServiceSpy.getBalance())
@@ -84,6 +85,7 @@ describe('USDCContractService', () => {
     const methodsObj = jasmine.createSpyObj('Ethereum', ['allowance']);
     methodsObj.allowance.and.returnValue(callObj);
     spyOn(usdcContractServiceSpy.web3Service, 'getSelectedAddress').and.returnValue('0x8225Afb2C5A6A68525E22A7E237BcE1600A665f5');
+    spyOn(usdcContractServiceSpy, 'initialize');
 
     usdcContractServiceSpy.usdc = {methods: methodsObj};
     await expectAsync(usdcContractServiceSpy.getAllowance('address'))
@@ -98,6 +100,7 @@ describe('USDCContractService', () => {
     methodsObj.approve.and.returnValue(sendObj);
     spyOn(usdcContractServiceSpy.web3Service, 'getSelectedAddress').and.returnValue('0x8225Afb2C5A6A68525E22A7E237BcE1600A665f5');
     spyOn(usdcContractServiceSpy, 'calculateUnit').and.returnValue(10);
+    spyOn(usdcContractServiceSpy, 'initialize');
 
     usdcContractServiceSpy.usdc = {methods: methodsObj};
     await expectAsync(usdcContractServiceSpy.approve('address', 10))
