@@ -102,7 +102,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.interestRateSubscription.unsubscribe();
   }
 
-  private onRight() {
+  onRight() {
     if (this.isLimit) {
       return;
     }
@@ -111,7 +111,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.checkLimit();
   }
 
-  private onLeft() {
+  onLeft() {
     if (this.currentPagenation <= 0) {
       return;
     }
@@ -120,7 +120,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.checkLimit();
   }
 
-  private calculateDuedate(val: string) {
+  calculateDuedate(val: string) {
     if (isNaN(Number(val))) {
       return;
     }
