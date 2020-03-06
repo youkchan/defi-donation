@@ -76,31 +76,24 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   initialize() {
-    this.defiDonationContractService.initialize()
+    this.defiDonationContractService.setDonationAccount()
     .then(async () => {
-      await this.usdcContractService.initialize();
-    })
-    .then(async () => {
-      await this.defiDonationContractService.setDonationAccount();
-    })
-    .then(() => {
-      this.checkDonationAccount();
-    })
-    .then(() => {
-      this.getUSDCBalance();
+      await this.storeAccountAvailable();
     })
     .then(async () => {
-      const isAccountExists = await this.defiDonationContractService.isAccountExists();
-      if (isAccountExists) {
-        this.getDonationAccount();
-        this.getUSDCAllowance();
-        this.getIntendedProjects();
-      }
+      if (this.isAccountAvailable) {
+        Promise.all([
+          this.storeUSDCBalance(),
+          this.storeUnderlyingBalance(),
+          this.storeDonationAccount(),
+          this.storeUSDCAllowance(),
+          this.getIntendedProjects(),
+        ]);
+     }
     })
     .then(() => {
       this.isLoading = false;
     });
-
   }
 
   ngOnDestroy() {
@@ -109,7 +102,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.interestRateSubscription.unsubscribe();
   }
 
-  onRight() {
+  private onRight() {
     if (this.isLimit) {
       return;
     }
@@ -118,7 +111,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.checkLimit();
   }
 
-  onLeft() {
+  private onLeft() {
     if (this.currentPagenation <= 0) {
       return;
     }
@@ -127,7 +120,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.checkLimit();
   }
 
-  calculateDuedate(val: string, index: number) {
+  private calculateDuedate(val: string) {
     if (isNaN(Number(val))) {
       return;
     }
@@ -135,12 +128,12 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     this.dueDate = +val / monthlyInterest;
   }
 
-  getDonationAccount() {
-    this.defiDonationContractService.beReady().then(() => {
-      this.defiDonationContractService.getDonationAccount().then((data) => {
-        this.donationAccountAddress = data;
-      });
-    });
+  async storeDonationAccount() {
+    try {
+      this.donationAccountAddress = await this.defiDonationContractService.getDonationAccount();
+    } catch (e) {
+      this.isError = true;
+    }
   }
 
   reloadProject() {
@@ -159,10 +152,9 @@ export class ProjectsComponent implements OnInit, OnDestroy {
 
   getIntendedProjects() {
     this.dataStorageService.fetchUserProjects(this.web3Service.getSelectedAddress()).subscribe((result) => {
-      const projects = this.projectService.getProjects();
       this.intendedProjects = [];
       result.forEach(intendedProject => {
-        projects.forEach(project => {
+        this.projectsAll.forEach(project => {
           if (intendedProject.projectAddress === project.address) {
             this.intendedProjects.push(
               {
@@ -175,66 +167,65 @@ export class ProjectsComponent implements OnInit, OnDestroy {
          }
         });
       });
+      this.createDonatedList();
+    });
 
-      if (this.intendedProjects.length === 0) {
-        this.isDonatedList[0] = null;
-        this.isDonatedList[1] = null;
-      }
+  }
 
-      this.projects.forEach( (diplayedProject, index) => {
-        for (const intendedProject of this.intendedProjects) {
-          if (diplayedProject.address === intendedProject.address) {
-            this.isDonatedList[index] = intendedProject.amount;
-            break;
-          } else {
-            this.isDonatedList[index] = null;
-          }
+  private createDonatedList() {
+    if (this.intendedProjects.length === 0) {
+      this.isDonatedList[0] = null;
+      this.isDonatedList[1] = null;
+    }
+
+    this.projects.forEach( (diplayedProject, index) => {
+      for (const intendedProject of this.intendedProjects) {
+        if (diplayedProject.address === intendedProject.address) {
+          this.isDonatedList[index] = intendedProject.amount;
+          break;
+        } else {
+          this.isDonatedList[index] = null;
         }
-      });
+      }
     });
   }
 
   async createAccount() {
     this.isProcessing = true;
-    this.defiDonationContractService.beReady().then( () => {
-      this.defiDonationContractService.createDonationAccount().then( (result) => {
-        this.initialize();
-        this.isProcessing = false;
-      });
-    });
+    try {
+      await this.defiDonationContractService.createDonationAccount();
+      this.initialize();
+     } catch (e) {
+      this.analyzeErrorOrNot(e.message);
+    } finally {
+      this.isProcessing = false;
+    }
   }
 
-  checkDonationAccount() {
-    this.defiDonationContractService.beReady().then(async () => {
-      try {
-        this.defiDonationContractService.isAccountExists()
-        .then((data) => {
-          this.isAccountAvailable = data;
-          if (data) {
-            this.getUnderlyingBalance();
-          }
-        });
-      } catch (e) {
-        console.log(e.message);
-        const delay = new Promise(resolve => setTimeout(resolve, 100));
-        await delay;
-        return await this.checkDonationAccount();
-      }
-    });
+
+  async storeAccountAvailable() {
+    try {
+      this.isAccountAvailable = await this.defiDonationContractService.isAccountExists();
+    } catch (e) {
+      this.isError = true;
+    }
   }
 
-  getUSDCBalance() {
-    this.usdcContractService.beReady().then(() => {
-      this.usdcContractService.getBalance().then((data) => {
-        this.usdcBalance = data;
-      });
-    });
+  async storeUSDCBalance() {
+    try {
+      this.usdcBalance = await this.usdcContractService.getBalance();
+    } catch (e) {
+      this.isError = true;
+    }
   }
 
-  async getUSDCAllowance() {
-    const address = await this.defiDonationContractService.getDonationAccount();
-    console.log(address);
-    this.usdcAllowanceBalance = await this.usdcContractService.getAllowance(address);
+  async storeUSDCAllowance() {
+    try {
+      const address = await this.defiDonationContractService.getDonationAccount();
+      this.usdcAllowanceBalance = await this.usdcContractService.getAllowance(address);
+    } catch (e) {
+      this.isError = true;
+    }
   }
 
   async approve() {
@@ -243,14 +234,18 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     try {
       const address = await this.defiDonationContractService.getDonationAccount();
       await this.usdcContractService.approve(address, amount);
-      await this.getUSDCAllowance();
+      await this.storeUSDCAllowance();
       this.donationForm.reset();
     } catch (e) {
-      if (!e.message.includes(Const.METAMASK_CANCEL)) {
-        this.isError = true;
-      }
+      this.analyzeErrorOrNot(e.message);
     } finally {
       this.isProcessing = false;
+    }
+  }
+
+  private analyzeErrorOrNot(message: string) {
+    if (!message.includes(Const.METAMASK_CANCEL)) {
+      this.isError = true;
     }
   }
 
@@ -262,16 +257,14 @@ export class ProjectsComponent implements OnInit, OnDestroy {
         this.usdcContractService.decimals
         );
       Promise.all([
-        this.getUSDCBalance(),
-        this.getUSDCAllowance(),
-        this.getUnderlyingBalance(),
+        this.storeUSDCBalance(),
+        this.storeUSDCAllowance(),
+        this.storeUnderlyingBalance(),
       ]).then(() => {
         this.donationForm.reset();
       });
      } catch (e) {
-      if (!e.message.includes(Const.METAMASK_CANCEL)) {
-        this.isError = true;
-      }
+      this.analyzeErrorOrNot(e.message);
     } finally {
       this.isProcessing = false;
     }
@@ -286,102 +279,92 @@ export class ProjectsComponent implements OnInit, OnDestroy {
         );
 
       Promise.all([
-        this.getUSDCBalance(),
-        this.getUnderlyingBalance(),
+        this.storeUSDCBalance(),
+        this.storeUnderlyingBalance(),
       ]).then(() => {
         this.donationForm.reset();
       });
      } catch (e) {
-      if (!e.message.includes(Const.METAMASK_CANCEL)) {
-        this.isError = true;
-      }
+      this.analyzeErrorOrNot(e.message);
     } finally {
       this.isProcessing = false;
     }
   }
 
-  getUnderlyingBalance() {
-    this.defiDonationContractService.beReady().then(async () => {
-      try {
-        const result = await this.defiDonationContractService.getUnderlyingBalance(this.usdcContractService.decimals);
-        this.underlyingBalance = +result;
-      } catch (e) {
-        const delay = new Promise(resolve => setTimeout(resolve, 100));
-        await delay;
-        return await this.getUnderlyingBalance();
-      }
-    });
+  async storeUnderlyingBalance() {
+    try {
+      this.underlyingBalance = await this.defiDonationContractService.getUnderlyingBalance(this.usdcContractService.decimals);
+    } catch (e) {
+      this.isError = true;
+    }
   }
 
   reloadDepositBalance() {
     this.isProcessing = true;
     setTimeout(async () => {
-      await this.getUnderlyingBalance();
-      this.isProcessing = false;
+      try {
+        await this.storeUnderlyingBalance();
+      } catch (e) {
+        this.isError = true;
+      } finally {
+        this.isProcessing = false;
+      }
     }, 500);
   }
 
-  addDonateProject(_index: number) {
+  async addDonateProject(_index: number) {
     this.isProcessing = true;
     const amount = +this.addDonationForm.value['donateAmount' + _index];
-    this.defiDonationContractService.beReady().then(async () => {
-      try {
-        const userProject = new UserProject(this.web3Service.getSelectedAddress(), amount , this.projects[_index].address, '', 0);
-        await this.defiDonationContractService.addDonateProject(
-          this.projects[_index].address,
-          amount,
-          this.usdcContractService.decimals
-          );
-        this.dataStorageService.saveUserProject(userProject).subscribe(
-          (response) => {
-            userProject.id = response.name;
-            this.userProjectService.addUserProject(userProject);
-            this.getIntendedProjects();
-            this.isProcessing = false;
-            this.addDonationForm.reset();
-            this.dueDate = null;
-          }
+    try {
+      const userProject = new UserProject(this.web3Service.getSelectedAddress(), amount , this.projects[_index].address, '', 0);
+      await this.defiDonationContractService.addDonateProject(
+        this.projects[_index].address,
+        amount,
+        this.usdcContractService.decimals
         );
-
-     } catch (e) {
-        const delay = new Promise(resolve => setTimeout(resolve, 100));
-        await delay;
-        return await this.addDonateProject(_index);
-      }
-    });
-
+      this.dataStorageService.saveUserProject(userProject).subscribe(
+        (response) => {
+          userProject.id = response.name;
+          this.userProjectService.addUserProject(userProject);
+          this.getIntendedProjects();
+          this.addDonationForm.reset();
+          this.dueDate = null;
+        }
+      );
+    } catch (e) {
+      this.analyzeErrorOrNot(e.message);
+    } finally {
+      this.isProcessing = false;
+    }
   }
 
-  executeDonateProject(_index: number) {
+  async executeDonateProject(_index: number) {
     this.isProcessing = true;
-    this.defiDonationContractService.beReady().then(async () => {
-      try {
-        await this.defiDonationContractService.donate(this.projects[_index].address);
+    try {
+      await this.defiDonationContractService.donate(this.projects[_index].address);
 
-        const userProjects = this.userProjectService.getUserProjects();
-        let index: string;
+      const userProjects = this.userProjectService.getUserProjects();
+      let index: string;
 
-        let deleteObj: {[key: string]: UserProject};
-        userProjects.forEach((element) => {
-          if (element.projectAddress === this.projects[_index].address) {
-            index = element.id;
-            element.delFlg = 1;
-            deleteObj = {[index]: element};
-          }
-        });
+      let deleteObj: {[key: string]: UserProject};
+      userProjects.forEach((element) => {
+        if (element.projectAddress === this.projects[_index].address) {
+          index = element.id;
+          element.delFlg = 1;
+          deleteObj = {[index]: element};
+        }
+      });
+      this.dataStorageService.deleteSpecificUserProject(deleteObj).subscribe(() => {
+        this.userProjectService.deleteUserProject(index);
+        this.getIntendedProjects();
+        this.storeUnderlyingBalance();
+      });
+    } catch (e) {
+      this.analyzeErrorOrNot(e.message);
+    } finally {
+      this.isProcessing = false;
+    }
 
-        this.dataStorageService.deleteSpecificUserProject(deleteObj).subscribe(() => {
-          this.userProjectService.deleteUserProject(index);
-          this.getIntendedProjects();
-          this.getUnderlyingBalance();
-          this.isProcessing = false;
-        });
-      } catch (e) {
-        const delay = new Promise(resolve => setTimeout(resolve, 100));
-        await delay;
-        return await this.executeDonateProject(_index);
-      }
-    });
 
 
   }

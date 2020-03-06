@@ -34,9 +34,7 @@ export class DeFiDonationContractService {
 
 
   async setDonationAccount() {
-    if (!this.deFiDonation ) {
-      return false;
-    }
+    await this.initialize();
 
     const isAccountExists = await this.isAccountExists();
     if (!isAccountExists) {

@@ -106,8 +106,15 @@ export class Web3Service {
     }
 
     private getAccount() {
+
       return this.web3.eth.getAccounts();
     }
+
+    /*
+    async requireSignature() {
+      await this.beReady();
+      return await this.web3.eth.personal.sign('ユーザー登録', this.getSelectedAddress(), null);
+    }*/
 
     private async refreshAccounts() {
       const accs = await this.getAccount();
