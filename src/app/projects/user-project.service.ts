@@ -26,7 +26,6 @@ export class UserProjectService {
   }
 
   deleteUserProject(_id: string) {
-    console.log(_id);
     this.userProjects.forEach((userProject, index) => {
       if (userProject.id === _id) {
         this.userProjects.splice(index, 1);
