@@ -63,14 +63,14 @@ export class ProjectsComponent implements OnInit, OnDestroy {
         }
       );
     this.dataStorageService.fetchProjects().subscribe();
+    this.interestRateSubscription = this.compoundAPIService.getSupplyRate('rinkeby').subscribe((result) => {
+      this.interestRate = result;
+    });
+
     this.initialize();
 
     this.accountSubscription = this.web3Service.accountsObservable.subscribe(() => {
       this.initialize();
-    });
-
-    this.interestRateSubscription = this.compoundAPIService.getSupplyRate('rinkeby').subscribe((result) => {
-      this.interestRate = result;
     });
 
   }
@@ -124,6 +124,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     if (isNaN(Number(val))) {
       return;
     }
+
     const monthlyInterest = this.underlyingBalance * this.interestRate / 12;
     this.dueDate = +val / monthlyInterest;
   }
@@ -252,9 +253,10 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   async supply() {
     this.isProcessing = true;
     try {
+      const decimals = await this.usdcContractService.getDecimals();
       await this.defiDonationContractService.supply(
         +this.donationForm.value.supplyAmount,
-        this.usdcContractService.decimals
+        decimals
         );
       Promise.all([
         this.storeUSDCBalance(),
@@ -273,9 +275,10 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   async redeem() {
     this.isProcessing = true;
     try {
+      const decimals = await this.usdcContractService.getDecimals();
       await this.defiDonationContractService.redeem(
         +this.donationForm.value.redeemAmount,
-        this.usdcContractService.decimals
+        decimals
         );
 
       Promise.all([
@@ -293,7 +296,8 @@ export class ProjectsComponent implements OnInit, OnDestroy {
 
   async storeUnderlyingBalance() {
     try {
-      this.underlyingBalance = await this.defiDonationContractService.getUnderlyingBalance(this.usdcContractService.decimals);
+      const decimals = await this.usdcContractService.getDecimals();
+      this.underlyingBalance = await this.defiDonationContractService.getUnderlyingBalance(decimals);
     } catch (e) {
       this.isError = true;
     }
@@ -317,10 +321,11 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     const amount = +this.addDonationForm.value['donateAmount' + _index];
     try {
       const userProject = new UserProject(this.web3Service.getSelectedAddress(), amount , this.projects[_index].address, '', 0);
+      const decimals = await this.usdcContractService.getDecimals();
       await this.defiDonationContractService.addDonateProject(
         this.projects[_index].address,
         amount,
-        this.usdcContractService.decimals
+        decimals
         );
       this.dataStorageService.saveUserProject(userProject).subscribe(
         (response) => {

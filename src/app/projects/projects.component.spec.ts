@@ -251,7 +251,8 @@ describe('ProjectsComponent', () => {
     component.isLoading = false;
     component.isProcessing = false;
     component.isAccountAvailable = true;
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
     fixture.detectChanges();
     tick();
     const element = fixture.debugElement.nativeElement.querySelector('input[name=supplyAmount]');
@@ -277,7 +278,8 @@ describe('ProjectsComponent', () => {
     component.isLoading = false;
     component.isProcessing = false;
     component.isAccountAvailable = true;
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
     fixture.detectChanges();
     tick();
     const element = fixture.debugElement.nativeElement.querySelector('input[name=supplyAmount]');
@@ -300,7 +302,8 @@ describe('ProjectsComponent', () => {
     component.isLoading = false;
     component.isProcessing = false;
     component.isAccountAvailable = true;
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
     fixture.detectChanges();
     tick();
     const element = fixture.debugElement.nativeElement.querySelector('input[name=redeemAmount]');
@@ -324,7 +327,8 @@ describe('ProjectsComponent', () => {
     component.isLoading = false;
     component.isProcessing = false;
     component.isAccountAvailable = true;
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
     fixture.detectChanges();
     tick();
     const element = fixture.debugElement.nativeElement.querySelector('input[name=redeemAmount]');
@@ -343,7 +347,8 @@ describe('ProjectsComponent', () => {
     const expectedBalance = 1000;
     const defiDonationContractService = fixture.debugElement.injector.get(DeFiDonationContractService);
     const usdcContractService = fixture.debugElement.injector.get(USDCContractService);
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
 
     spyOn(defiDonationContractService, 'getUnderlyingBalance').and.returnValue(Promise.resolve(expectedBalance));
 
@@ -357,7 +362,7 @@ describe('ProjectsComponent', () => {
     const expectedBalance = 1000;
     const defiDonationContractService = fixture.debugElement.injector.get(DeFiDonationContractService);
     const usdcContractService = fixture.debugElement.injector.get(USDCContractService);
-    usdcContractService.decimals = 6;
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
 
     spyOn(defiDonationContractService, 'getUnderlyingBalance').and.callFake(() => {throw new Error('Some Error is occured!'); });
 
@@ -500,7 +505,8 @@ describe('ProjectsComponent', () => {
     component.isLoading = false;
     component.isProcessing = false;
     component.isAccountAvailable = true;
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
     fixture.detectChanges();
     tick();
     const element = fixture.debugElement.nativeElement.querySelector('input[ng-reflect-name=donateAmount0]');
@@ -542,7 +548,8 @@ describe('ProjectsComponent', () => {
     component.isLoading = false;
     component.isProcessing = false;
     component.isAccountAvailable = true;
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
     fixture.detectChanges();
     tick();
     const element = fixture.debugElement.nativeElement.querySelector('input[ng-reflect-name=donateAmount0]');
@@ -593,7 +600,8 @@ describe('ProjectsComponent', () => {
     component.isLoading = false;
     component.isProcessing = false;
     component.isAccountAvailable = true;
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
     fixture.detectChanges();
     tick();
     component.executeDonateProject(index);
@@ -630,7 +638,8 @@ describe('ProjectsComponent', () => {
     component.isLoading = false;
     component.isProcessing = false;
     component.isAccountAvailable = true;
-    usdcContractService.decimals = 6;
+
+    spyOn(usdcContractService, 'getDecimals').and.returnValue(Promise.resolve(6));
     fixture.detectChanges();
     tick();
     component.executeDonateProject(index);

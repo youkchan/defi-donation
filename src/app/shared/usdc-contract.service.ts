@@ -33,6 +33,11 @@ export class USDCContractService {
     this.decimals = decimals;
   }
 
+  async getDecimals() {
+    await this.initialize();
+    return this.decimals;
+  }
+
   private calculateUnit(_amount: number, _isUp: boolean, _decimals: number) {
     if (typeof _amount !== 'number' || _amount === 0) {
       return 0;

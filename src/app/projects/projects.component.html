@@ -22,7 +22,7 @@
           [name]="'donateAmount' + i"
           ngModel
           required
-          (input)="calculateDuedate($event.target.value, i )"
+          (input)="calculateDuedate($event.target.value)"
           *ngIf="isDonatedList[i] == null && isAccountAvailable"
         >
         <label for="donateAmount" *ngIf="isDonatedList[i] != null">{{isDonatedList[i] | currency: '' : 'symbol' :'1.0-0'}}を寄付予定です</label>
