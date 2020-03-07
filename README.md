@@ -2,8 +2,11 @@
 
 #Tech stack: 
 Frontend : Angular 8
+
 Backend : Firebase (Hosting / Realtime Database)
+
 SmartContract : Solidity (Compound Protocol, USDC Protocol)
+
 CI/CD : CircleCI
 
 # DefiDonation
