@@ -40,6 +40,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   defaultErrorMessage = 'エラーが発生しました。ネットワーク環境や、メタマスクの設定を確認してください!';
   errorMessage = this.defaultErrorMessage;
   isError = false;
+  isProperNetwork = true;
   @ViewChild('donationForm', { static: false }) donationForm: NgForm;
   @ViewChild('addDonationForm', { static: false }) addDonationForm: NgForm;
 
@@ -54,6 +55,14 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     ) { }
 
   ngOnInit() {
+    this.web3Service.isProperNetwork().then((result) => {
+      if (result === false) {
+        this.isProperNetwork = false;
+        this.isLoading = false;
+        return;
+      }
+    });
+
     this.isLoading = true;
     this.subscription = this.projectService.projectChanged
       .subscribe(
@@ -62,6 +71,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
           this.reloadProject();
         }
       );
+
     this.dataStorageService.fetchProjects().subscribe();
     this.interestRateSubscription = this.compoundAPIService.getSupplyRate('rinkeby').subscribe((result) => {
       this.interestRate = result;
@@ -152,25 +162,28 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   getIntendedProjects() {
-    this.dataStorageService.fetchUserProjects(this.web3Service.getSelectedAddress()).subscribe((result) => {
-      this.intendedProjects = [];
-      result.forEach(intendedProject => {
-        this.projectsAll.forEach(project => {
-          if (intendedProject.projectAddress === project.address) {
-            this.intendedProjects.push(
-              {
-                name: project.name,
-                id: intendedProject.id,
-                amount: intendedProject.amount,
-                address: project.address
-              }
-              );
-         }
+    try {
+      this.dataStorageService.fetchUserProjects(this.web3Service.getSelectedAddress()).subscribe((result) => {
+        this.intendedProjects = [];
+        result.forEach(intendedProject => {
+          this.projectsAll.forEach(project => {
+            if (intendedProject.projectAddress === project.address) {
+              this.intendedProjects.push(
+                {
+                  name: project.name,
+                  id: intendedProject.id,
+                  amount: intendedProject.amount,
+                  address: project.address
+                }
+                );
+           }
+          });
         });
+        this.createDonatedList();
       });
-      this.createDonatedList();
-    });
-
+    } catch (e) {
+      this.isError = true;
+    }
   }
 
   private createDonatedList() {
@@ -230,9 +243,13 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   }
 
   async approve() {
-    const amount = +this.donationForm.value.approveAmount;
     this.isProcessing = true;
     try {
+      const amount = +this.donationForm.value.approveAmount;
+      if (amount <= 0 || isNaN(Number(amount))) {
+        return;
+      }
+
       const address = await this.defiDonationContractService.getDonationAccount();
       await this.usdcContractService.approve(address, amount);
       await this.storeUSDCAllowance();
@@ -253,9 +270,14 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   async supply() {
     this.isProcessing = true;
     try {
+      const amount = +this.donationForm.value.supplyAmount;
+      if (amount <= 0 || isNaN(Number(amount))) {
+        return;
+      }
+
       const decimals = await this.usdcContractService.getDecimals();
       await this.defiDonationContractService.supply(
-        +this.donationForm.value.supplyAmount,
+        amount,
         decimals
         );
       Promise.all([
@@ -275,9 +297,13 @@ export class ProjectsComponent implements OnInit, OnDestroy {
   async redeem() {
     this.isProcessing = true;
     try {
+      const amount = +this.donationForm.value.redeemAmount;
+      if (amount <= 0 || isNaN(Number(amount))) {
+        return;
+      }
       const decimals = await this.usdcContractService.getDecimals();
       await this.defiDonationContractService.redeem(
-        +this.donationForm.value.redeemAmount,
+        amount,
         decimals
         );
 
@@ -318,8 +344,12 @@ export class ProjectsComponent implements OnInit, OnDestroy {
 
   async addDonateProject(_index: number) {
     this.isProcessing = true;
-    const amount = +this.addDonationForm.value['donateAmount' + _index];
     try {
+      const amount = +this.addDonationForm.value['donateAmount' + _index];
+      if (amount <= 0 || isNaN(Number(amount))) {
+        return;
+      }
+
       const userProject = new UserProject(this.web3Service.getSelectedAddress(), amount , this.projects[_index].address, '', 0);
       const decimals = await this.usdcContractService.getDecimals();
       await this.defiDonationContractService.addDonateProject(
@@ -369,9 +399,6 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     } finally {
       this.isProcessing = false;
     }
-
-
-
   }
 
 }

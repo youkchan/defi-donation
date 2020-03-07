@@ -1,6 +1,6 @@
 [![CircleCI](https://circleci.com/gh/youkchan/defi-donation.svg?style=shield)](https://circleci.com/gh/youkchan/defi-donation)
 
-##Tech stack: 
+## Tech stack
 
 Frontend : Angular 8
 

@@ -40,4 +40,44 @@ describe('CompoundAPIService', () => {
       }
     );
   });
+
+  it('handleError clientError', (done) => {
+    const throwObj = {
+      error: new ErrorEvent('clientError', {
+        message : 'Some error occured!',
+      })
+    };
+
+    spyOn(window.console, 'error');
+
+    (compoundAPIService as any).handleError(throwObj).subscribe(
+      result => {
+      /* Nothing Happens */
+      },
+      error => {
+        expect(window.console.error).toHaveBeenCalledWith('An error occurred:', 'Some error occured!');
+        done();
+      }
+    );
+  });
+
+  it('handleError ServerError', (done) => {
+    const status = 404;
+    const throwObj = {status};
+
+    spyOn(window.console, 'error');
+    (compoundAPIService as any).handleError(throwObj).subscribe(
+      result => {
+      /* Nothing Happens */
+      },
+      error => {
+        expect(window.console.error).toHaveBeenCalledWith(
+            `Backend returned code ${status}, ` +
+            `body was: undefined`
+          );
+        done();
+      }
+    );
+  });
+
 });
