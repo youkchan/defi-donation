@@ -47,6 +47,11 @@ export class Web3Service {
 
     }
 
+    async isProperNetwork() {
+      await this.beReady();
+      return this.isConnectMetamask;
+    }
+
     private instantiateWeb3() {
       return new Web3(window.ethereum);
     }

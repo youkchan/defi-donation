@@ -4,8 +4,12 @@
 <div *ngIf="isProcessing">
   <app-processing-spinner></app-processing-spinner>
 </div>
+<div *ngIf="!isProperNetwork">
+  <div class="alert alert-danger" role="alert">MetamaskでRinkebyネットワークに接続してください</div>
+</div>
+
 <div class="alert alert-danger" role="alert" *ngIf="isError && !isLoading">{{errorMessage}}</div>
-<div *ngIf="!isLoading">
+<div *ngIf="!isLoading && isProperNetwork">
   <form #addDonationForm="ngForm">
  <!--<a class="arrow" style="left: 0px;" *ngIf="currentPagenation != 0"(click)="onLeft()"><i class="fa fa-angle-left fa-3x" aria-hidden="true"></i></a> -->
   <!--<a class="arrow" style="right: 0px;" *ngIf="!isLimit" (click)="onRight()"><i class="fa fa-angle-right fa-3x" aria-hidden="true"></i></a>-->
@@ -26,7 +30,7 @@
           *ngIf="isDonatedList[i] == null && isAccountAvailable"
         >
         <label for="donateAmount" *ngIf="isDonatedList[i] != null">{{isDonatedList[i] | currency: '' : 'symbol' :'1.0-0'}}を寄付予定です</label>
-        <button class="btn btn-outline-secondary col-12 mt-1" type="button" (click)="addDonateProject(i)" *ngIf="isDonatedList[i] == null" [disabled]="!isAccountAvailable" [ngStyle]="{'cursor': isAccountAvailable ? 'pointer' : 'not-allowed'}">寄付を登録</button>
+        <button class="btn btn-outline-secondary col-12 mt-1" type="button" (click)="addDonateProject(i)" *ngIf="isDonatedList[i] == null" [disabled]="!isAccountAvailable || !addDonationForm.value['donateAmount' + i] > 0" [ngStyle]="{'cursor': isAccountAvailable ? 'pointer' : 'not-allowed'}">寄付を登録</button>
         <button class="btn btn-outline-success col-12 mt-1" type="button" (click)="executeDonateProject(i)" *ngIf="isDonatedList[i] != null" [disabled]="!isAccountAvailable" [ngStyle]="{'cursor': isAccountAvailable ? 'pointer' : 'not-allowed'}">寄付を実施</button>
       </div>
     </div>
@@ -57,7 +61,7 @@
         >
       </div>
       <div class="col-6">
-        <button class="btn btn-outline-success col-12" type="button" (click)='approve()' >送金を許可</button>
+        <button class="btn btn-outline-success col-12" type="button" (click)='approve()' [disabled]="!donationForm.value.approveAmount > 0">送金を許可</button>
       </div>
     </div>
   <hr *ngIf="isAccountAvailable">
@@ -75,7 +79,7 @@
         >
       </div>
       <div class="col-6">
-        <button class="btn btn-outline-success col-12" type="button" (click)='supply()'>デポジットの実施</button>
+        <button class="btn btn-outline-success col-12" type="button" (click)='supply()' [disabled]="!donationForm.value.supplyAmount > 0">デポジットの実施</button>
       </div>
     </div>
   <hr *ngIf="isAccountAvailable">
@@ -95,7 +99,7 @@
         >
       </div>
       <div class="col-6">
-        <button class="btn btn-outline-success col-12" type="button" (click)='redeem()' [disabled]="intendedProjects.length > 0" [ngStyle]="{'cursor': intendedProjects.length > 0 ? 'not-allowed' : 'pointer'}">デポジットの引き出し</button>
+        <button class="btn btn-outline-success col-12" type="button" (click)='redeem()' [disabled]="intendedProjects.length > 0 || !donationForm.value.redeemAmount > 0" [ngStyle]="{'cursor': intendedProjects.length > 0 ? 'not-allowed' : 'pointer'}">デポジットの引き出し</button>
       </div>
     </div>
 
