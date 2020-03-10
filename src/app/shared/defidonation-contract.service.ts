@@ -75,7 +75,7 @@ export class DeFiDonationContractService {
     try {
       await this.initialize();
       const tx = await this.deFiDonation.methods.createDonationAccount()
-        .send({from: this.web3Service.getSelectedAddress(), gas: 1200000, gasPrice: 10000000000});
+        .send({from: this.web3Service.getSelectedAddress(), gas: 1300000, gasPrice: 10000000000});
       console.log(tx);
     } catch (e) {
       if (e.message.includes('Transaction has been reverted by the EVM')) {
