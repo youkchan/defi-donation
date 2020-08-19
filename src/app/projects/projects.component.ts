@@ -12,6 +12,7 @@ import { UserProject } from './user-project.model';
 import { UserProjectService } from './user-project.service';
 import { ProcessingSpinnerComponent } from '../shared/processing-spinner/processing-spinner.component';
 import { Const } from '../shared/const';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-projects',
@@ -51,7 +52,8 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     private usdcContractService: USDCContractService,
     private compoundAPIService: CompoundAPIService,
     private web3Service: Web3Service,
-    private userProjectService: UserProjectService
+    private userProjectService: UserProjectService,
+    private router: Router
     ) { }
 
   ngOnInit() {
@@ -59,6 +61,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       if (result === false) {
         this.isProperNetwork = false;
         this.isLoading = false;
+        this.router.navigate(['/howtouse']);
         return;
       }
     });
