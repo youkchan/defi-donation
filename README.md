@@ -10,6 +10,11 @@ SmartContract : Solidity (Compound Protocol, USDC Protocol)
 
 CI/CD : CircleCI
 
+
+## 動作イメージ
+
+![動作イメージ](https://defi-donation.firebaseapp.com/assets/defi_movie.gif)
+
 # DefiDonation
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.24.
